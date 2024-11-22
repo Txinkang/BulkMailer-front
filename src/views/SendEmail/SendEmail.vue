@@ -54,7 +54,6 @@
               v-model="emailTitle"
               placeholder="请输入主题"
               size="large"
-              style="width: 50em"
             ></el-input>
           </el-form-item>
         </el-form>
@@ -63,7 +62,7 @@
       <div class="emailTemplate">
         <el-tabs>
           <el-tab-pane label="公共模板">
-            <el-radio-group v-model="emailTemplate.emailPublicTemplate">
+            <el-radio-group v-model="emailTemplate.emailPublicTemplate" @change="chooseEmailTemplate(emailTemplate.emailPublicTemplate)">
               <el-radio value="1">
                 空白模板
               </el-radio>
@@ -104,7 +103,7 @@
       </div>
 
       <div class="editToolbar">
-        <EditToolbar></EditToolbar>
+        <EditToolbar :data="emailTemplate.emailPublicTemplate"></EditToolbar>
       </div>
     </div>
   </div>
@@ -122,6 +121,11 @@ const emailTemplate = reactive({
 const emailTitle = ref("");
 const emailTitleRule = {
   "emailTitle": [{required: true, message: "请输入主题", trigger: "blur"}]
+}
+
+
+function chooseEmailTemplate(value) {
+  console.log(value)
 }
 </script>
 
