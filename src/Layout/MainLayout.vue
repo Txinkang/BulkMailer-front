@@ -20,10 +20,10 @@
           @select="handleMenuSelect"
           class="el-menu-vertical"
         >
-          <el-menu-item index="/sendEmail">发送邮件</el-menu-item>
-          <el-menu-item index="/autoEmail">自动邮件管理</el-menu-item>
-          <el-menu-item index="/uploadFile">上传文件</el-menu-item>
-          <el-menu-item index="/emailHistory">邮件历史</el-menu-item>
+          <el-menu-item class="menu-item" index="/sendEmail">发送邮件</el-menu-item>
+          <el-menu-item class="menu-item" index="/autoEmail">自动邮件管理</el-menu-item>
+          <el-menu-item class="menu-item" index="/uploadFile">上传文件</el-menu-item>
+          <el-menu-item class="menu-item" index="/emailHistory">邮件历史</el-menu-item>
         </el-menu>
       </aside>
 
@@ -47,7 +47,7 @@ const companyName = "天津市易架构信息科技有限公司";
 
 // 用户信息
 const username = "张三";
-const company = "公司名称";
+const company = "天津市易架构信息科技有限公司";
 const department = "研发部";
 const position = "前端开发工程师";
 
@@ -91,13 +91,16 @@ function handleMenuSelect(index) {
 }
 
 .layout-sidebar {
-  width: 200px;
+  width: 3em;
   background-color: #f5f5f5;
-  border-right: 1px solid #dcdfe6;
 }
 
 .layout-content {
   flex: 1;
   padding: 20px;
+}
+
+.menu-item{
+  border: 1px solid #dcdfe6; /* 默认边框颜色 */
 }
 </style>
