@@ -38,13 +38,16 @@
 
     </div>
 
-    <!-- 文本编辑区域 -->
-    <div
-      class="editor"
-      contenteditable="true"
-      ref="editor"
-      placeholder="请输入邮件内容..."
-    ></div>
+    <div class="email-editor">
+      <!-- 文本编辑区域 -->
+      <div class="editor" contenteditable="true" ref="editor"></div>
+      <!-- 退订链接 -->
+      <div class="unsubscribe-link">
+        <a href="https://example.com/unsubscribe" style="text-decoration: none; color: gray;">
+          如要退订此类邮件，请点击此处
+        </a>
+      </div>
+    </div>
   </div>
 
 </template>
@@ -97,12 +100,10 @@ const templates = {
     5: "<p>个人模板5内容。</p>",
   },
 };
+
 // 方法实现
 onMounted(() => {
-  // if (editor.value) {
-  //   console.log(editor.value)
-  //   //editor.value.innerHTML = templates.public.parseInt(props.data); // 设置初始内容
-  // }
+
 });
 
 watch(
@@ -160,16 +161,10 @@ const insertLink = () => {
 
 <style scoped>
 .email-editor {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  max-width: 800px;
-  margin: 0 auto 10em;
-  padding: 10px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  position: relative;
   border: 1px solid #ddd;
-  border-radius: 5px;
-  background: #fff;
+  border-radius: 4px;
+  overflow: hidden;
 }
 
 .editor {
@@ -180,8 +175,6 @@ const insertLink = () => {
   outline: none;
   background-color: #fff;
   overflow-y: auto;
-  border: none;
-  resize: vertical;
 }
 
 .editor:empty::before {
@@ -189,6 +182,16 @@ const insertLink = () => {
   color: #ccc;
   font-style: italic;
 }
+
+.unsubscribe-link {
+  text-align: center;
+  padding: 10px 0;
+  font-size: 14px;
+  color: gray;
+  border-top: 1px solid #ddd;
+  background-color: #f9f9f9;
+}
+
 .toolbar {
   display: flex;
   align-items: center;
