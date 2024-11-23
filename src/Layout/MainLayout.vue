@@ -21,9 +21,15 @@
           class="el-menu-vertical"
         >
           <el-menu-item class="menu-item" index="/sendEmail">发送邮件</el-menu-item>
-          <el-menu-item class="menu-item" index="/autoEmail">自动邮件管理</el-menu-item>
-          <el-menu-item class="menu-item" index="/uploadFile">上传文件</el-menu-item>
-          <el-menu-item class="menu-item" index="/emailHistory">邮件历史</el-menu-item>
+          <el-menu-item class="menu-item" index="/autoEmail">自动发送邮件管理</el-menu-item>
+          <el-menu-item class="menu-item" index="/fileManage">文件管理</el-menu-item>
+          <el-menu-item class="menu-item" index="/emailHistory">历史记录</el-menu-item>
+          <el-menu-item class="menu-item" index="/companyManage">公司管理</el-menu-item>
+          <el-menu-item class="menu-item" index="/sectorManage">部门管理</el-menu-item>
+          <el-menu-item class="menu-item" index="/userManage">用户管理</el-menu-item>
+          <el-menu-item class="menu-item" index="/commodityManage">商品管理</el-menu-item>
+          <el-menu-item class="menu-item" index="/supplierManage">供应商管理</el-menu-item>
+          <el-menu-item class="menu-item" index="/customerManage">客户管理</el-menu-item>
         </el-menu>
       </aside>
 
