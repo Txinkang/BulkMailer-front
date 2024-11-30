@@ -2,7 +2,7 @@
   <div class="company-container">
     <!-- 顶部按钮 -->
     <div class="button-group">
-      <el-button type="primary" @click="openCreateDialog">创建部门</el-button>
+      <el-button type="primary" @click="openCreateDialog">创建岗位</el-button>
       <el-button>导入</el-button>
     </div>
 
@@ -10,7 +10,7 @@
     <div style="display: flex;flex-direction: row;">
       <el-input
         v-model="searchText"
-        placeholder="请搜索部门名称"
+        placeholder="请搜索岗位名称"
         clearable
         class="search-box"
       >
@@ -27,8 +27,8 @@
 
     <!-- 表格 -->
     <el-table :data="tableData" border style="width: 100%">
-      <!-- 部门名称列 -->
-      <el-table-column prop="companyName" label="部门名称" min-width="200" />
+      <!-- 岗位名称列 -->
+      <el-table-column prop="companyName" label="岗位名称" min-width="200" />
 
       <!-- 查看按钮列 -->
       <el-table-column label="操作" align="center" min-width="180">
@@ -50,34 +50,28 @@
       background
     />
 
-    <!-- 查看部门对话框 -->
-    <el-dialog title="部门详情" v-model="dialogVisible" width="50%">
+    <!-- 查看岗位对话框 -->
+    <el-dialog title="岗位详情" v-model="dialogVisible" width="50%">
       <el-form label-width="120px">
         <!-- 公司名称 -->
         <el-form-item label="公司名称">
           <el-input v-model="dialogData.companyName" disabled />
         </el-form-item>
 
-        <!-- 部门信息（菜单形式） -->
-        <el-form-item label="部门信息">
-          <div>
-            <el-menu style="display: flex;flex-direction: row">
-              <el-sub-menu index="sender-management">
-                <template #title>
-                  <span>部门</span>
-                </template>
-                <el-menu-item >岗位</el-menu-item>
-                <el-menu-item >岗位</el-menu-item>
-                <el-menu-item >岗位</el-menu-item>
-              </el-sub-menu>
-            </el-menu>
-          </div>
+        <!-- 部门信息 -->
+        <el-form-item label="部门名称">
+          <el-input v-model="dialogData.companyName" disabled />
+        </el-form-item>
+
+        <!-- 岗位信息 -->
+        <el-form-item label="岗位名称">
+          <el-input v-model="dialogData.companyName" disabled />
         </el-form-item>
       </el-form>
     </el-dialog>
 
-    <!-- 创建部门对话框 -->
-    <el-dialog title="创建部门" v-model="createDialogVisible" width="40%">
+    <!-- 创建岗位对话框 -->
+    <el-dialog title="创建岗位" v-model="createDialogVisible" width="40%">
       <el-form label-width="120px">
         <el-form-item label="公司名称">
           <el-select v-model="newDepartment.company" placeholder="请选择公司">
@@ -87,8 +81,17 @@
 
         <!-- 部门名称输入框 -->
         <el-form-item label="部门名称">
-          <el-input v-model="newDepartment.name" placeholder="请输入部门名称" />
+          <el-select v-model="newDepartment.company" placeholder="请选择部门">
+            <el-option value="部门" />
+            <el-option value="部门" />
+          </el-select>
         </el-form-item>
+
+        <!-- 岗位名称输入框 -->
+        <el-form-item label="岗位名称">
+          <el-input placeholder="请输入岗位名称"/>
+        </el-form-item>
+
       </el-form>
 
       <template #footer>
@@ -97,17 +100,24 @@
       </template>
     </el-dialog>
 
-    <!-- 修改部门对话框 -->
-    <el-dialog title="修改部门" v-model="updateDialogVisible" width="40%">
+    <!-- 修改岗位对话框 -->
+    <el-dialog title="修改岗位" v-model="updateDialogVisible" width="40%">
       <el-form label-width="120px">
-        <el-form-item label="部门名称">
-          <el-input placeholder="请输入部门名称" />
+        <el-form-item label="岗位名称">
+          <el-input placeholder="请输入岗位名称" />
         </el-form-item>
         <!-- 公司名称选择框 -->
         <el-form-item v-if="user === 'receiver'" label="公司名称">
           <el-select  placeholder="请选择公司">
             <el-option value="公司" />
             <el-option value="公司" />
+          </el-select>
+        </el-form-item>
+        <!-- 部门名称选择框 -->
+        <el-form-item v-if="user === 'receiver'" label="部门名称">
+          <el-select  placeholder="请选择部门">
+            <el-option value="部门" />
+            <el-option value="部门" />
           </el-select>
         </el-form-item>
       </el-form>
@@ -145,11 +155,11 @@ const searchText = ref("");
 
 // 表格数据
 const tableData = [
-  { companyName: "部门A" },
-  { companyName: "部门B" },
-  { companyName: "部门C" },
+  { companyName: "岗位A" },
+  { companyName: "岗位B" },
+  { companyName: "岗位C" },
 ];
-// 新部门信息
+// 新岗位信息
 const newDepartment = ref({
   company: null,
   name: "",
@@ -165,36 +175,16 @@ const totalData = ref(30);
 // 查看对话框
 const dialogVisible = ref(false);
 const dialogData = ref({
-  companyName: "",
+  companyName: "公司名称",
   departments: [
     {
-      name: "部门1",
+      name: "岗位1",
       positions: ["岗位A", "岗位B"],
-    },
-    {
-      name: "部门2",
-      positions: ["岗位C", "岗位D", "岗位E"],
-    },
-    {
-      name: "部门3",
-      positions: ["岗位F", "岗位G"],
-    },
-    {
-      name: "部门4",
-      positions: ["岗位H", "岗位I", "岗位J"],
-    },
-    {
-      name: "部门5",
-      positions: ["岗位K"],
-    },
-    {
-      name: "部门6",
-      positions: ["岗位L", "岗位M"],
     },
   ],
 });
 
-// 部门分页
+// 岗位分页
 const departmentPage = ref(1);
 
 

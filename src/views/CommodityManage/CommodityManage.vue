@@ -3,16 +3,34 @@
     <div class="commodityManageContainer">
       <el-tabs class="commodityManageTabs">
         <el-tab-pane label="商品管理">
-          <!-- 两个下拉菜单 -->
+          <!-- 头部 -->
           <el-form label-width="120px" inline>
-            <!-- 所属供应商 -->
+            <!-- 搜索框 -->
+            <el-form-item>
+              <el-input
+                v-model="searchText"
+                placeholder="请搜索商品名称"
+                clearable
+                class="search-box"
+              >
+                <template #append>
+                  <el-button>
+                    <el-icon>
+                      <Search></Search>
+                    </el-icon>
+                  </el-button>
+                </template>
+              </el-input>
+            </el-form-item>
+
+<!--            &lt;!&ndash; 所属供应商 &ndash;&gt;
             <el-form-item label="所属供应商">
               <el-select v-model="selectedCompany" placeholder="请选择供应商">
                 <el-option v-for="company in companies" :key="company" :label="company" :value="company" />
               </el-select>
             </el-form-item>
 
-            <!-- 所属客户 -->
+            &lt;!&ndash; 所属客户 &ndash;&gt;
             <el-form-item label="所属客户">
               <el-select v-model="selectedDepartment" placeholder="请选择客户">
                 <el-option
@@ -22,13 +40,13 @@
                   :value="department"
                 />
               </el-select>
-            </el-form-item>
+            </el-form-item>-->
 
             <!-- 所属品类  -->
             <el-form-item label="所属品类">
               <el-select v-model="category" placeholder="请选择品类">
                 <el-option
-                  v-for="department in departments"
+                  v-for="department in category"
                   :key="department"
                   :label="department"
                   :value="department"
@@ -36,19 +54,30 @@
               </el-select>
             </el-form-item>
 
+            <!-- 刷新  -->
+            <el-form-item>
+              <el-button type="primary"><el-icon><Refresh /></el-icon></el-button>
+            </el-form-item>
+
+            <!-- 导入  -->
+            <el-form-item>
+              <el-button type="primary">导入</el-button>
+            </el-form-item>
+
+
             <!-- 创建商品按钮 -->
             <el-form-item>
               <el-button type="primary" @click="openDialog">创建商品</el-button>
             </el-form-item>
           </el-form>
 
-          <el-table :data="tableData" border style="width: 100%">
+          <el-table :data="tableData" border style="width: 100%;margin-bottom: 20px">
             <!-- 供应商名称列 -->
-            <el-table-column label="供应商名称" align="left" min-width="200">
+<!--            <el-table-column label="供应商名称" align="left" min-width="200">
               <template #default="{ row }">
                 <span>{{ row.company }}</span>
               </template>
-            </el-table-column>
+            </el-table-column>-->
 
             <!-- 品类名称列 -->
             <el-table-column label="品类名称" align="left" min-width="200">
@@ -57,9 +86,17 @@
               </template>
             </el-table-column>
 
+            <!-- 商品名称列 -->
+            <el-table-column label="商品名称" align="left" min-width="200">
+              <template #default="{ row }">
+                <span>{{ row.commodity }}</span>
+              </template>
+            </el-table-column>
+
             <!-- 删除操作列 -->
             <el-table-column label="操作" align="center" min-width="100">
               <template #default="{ row }">
+                <el-button type="warning" size="small" @click="openUpdateDialog">修改名称</el-button>
                 <el-button type="danger" size="small">删除</el-button>
               </template>
             </el-table-column>
@@ -73,12 +110,32 @@
             layout="prev, pager, next"
             background
           />
+
         </el-tab-pane>
 
         <el-tab-pane label="品类管理">
           <!-- 创建品类按钮 -->
           <el-form-item>
+            <!-- 搜索框 -->
+            <el-form-item>
+              <el-input
+                v-model="searchText"
+                placeholder="请搜索品类名称"
+                clearable
+                class="search-box"
+              >
+                <template #append>
+                  <el-button>
+                    <el-icon>
+                      <Search></Search>
+                    </el-icon>
+                  </el-button>
+                </template>
+              </el-input>
+            </el-form-item>
             <el-button type="primary" @click="openCategoryDialog">创建品类</el-button>
+            <el-button type="primary"><el-icon><Refresh /></el-icon></el-button>
+
           </el-form-item>
 
 
@@ -93,6 +150,7 @@
             <!-- 删除操作列 -->
             <el-table-column label="操作" align="center" min-width="100">
               <template #default="{ row }">
+                <el-button type="warning" size="small" @click="openUpdateDialog">修改名称</el-button>
                 <el-button type="danger" size="small">删除</el-button>
               </template>
             </el-table-column>
@@ -109,17 +167,10 @@
         @close="resetDialog"
       >
         <el-form label-width="120px">
-          <!-- 供应商名称下拉菜单 -->
-          <el-form-item label="供应商名称">
-            <el-select  placeholder="请选择供应商">
-              <el-option v-for="company in companies" :key="company" :label="company" :value="company" />
-            </el-select>
-          </el-form-item>
-
           <!-- 品类名称输入框 -->
           <el-form-item label="品类名称">
             <el-select  placeholder="请选择品类">
-              <el-option v-for="company in companies" :key="company" :label="company" :value="company" />
+              <el-option v-for="company in category" :key="company" :label="company" :value="company" />
             </el-select>
           </el-form-item>
 
@@ -156,6 +207,19 @@
           <el-button type="primary" @click="createDepartment">确定</el-button>
         </template>
       </el-dialog>
+
+      <!-- 修改商品对话框 -->
+      <el-dialog title="修改商品名称" v-model="updateDialogVisible" width="40%">
+        <el-form label-width="120px">
+          <el-form-item label="商品名称">
+            <el-input placeholder="请输入商品名称" />
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <el-button @click="createDialogVisible = false">取消</el-button>
+          <el-button type="primary">确定</el-button>
+        </template>
+      </el-dialog>
     </div>
   </div>
 </template>
@@ -164,26 +228,35 @@
 <script setup>
 // 下拉菜单数据
 import {ref} from "vue";
-
+import {Search} from "@element-plus/icons-vue";
+// 分页
+const currentPage = ref(1);
+const pageSize = ref(10);
+const totalData = ref(30);
 const companies = ["供应商A", "供应商B", "供应商C"];
 const departments = ["客户1", "客户2", "客户3"];
 const category = ["品类1", "品类2", "品类3"];
 // 表格的静态数据
 const tableData = [
-  { company: "供应商A", department: "品类1", user: "商品1"},
-  { company: "供应商B", department: "品类2", user: "商品2" },
-  { company: "供应商C", department: "品类3", user: "商品3" },
-  { company: "供应商D", department: "品类4", user: "商品4" },
+  { company: "供应商A", department: "品类1", commodity: "商品1"},
+  { company: "供应商B", department: "品类2", commodity: "商品2" },
+  { company: "供应商C", department: "品类3", commodity: "商品3" },
+  { company: "供应商D", department: "品类4", commodity: "商品4" },
 ];
 // 所属供应商和部门
 const selectedCompany = ref(null);
 const selectedDepartment = ref(null);
+const updateDialogVisible = ref(false);
+
 // 打开对话框
 const openDialog = () => {
   dialogVisible.value = true;
 };
 const openCategoryDialog = () => {
   categoryDialogVisible.value = true;
+};
+const openUpdateDialog = () => {
+  updateDialogVisible.value = true;
 };
 // 创建商品对话框的状态
 const dialogVisible = ref(false);
@@ -197,5 +270,7 @@ const closeDialog = () => {
 
 
 <style scoped>
-
+.search-box{
+  margin-right: 20px;
+}
 </style>

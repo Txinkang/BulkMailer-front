@@ -2,12 +2,43 @@
   <div class="AutoEmail">
     <div class="AutoEmailContainer">
       <el-tabs>
-        <el-tab-pane label="循环发送">
-          <el-table :data="tableData" border style="width: 100%">
+        <el-tab-pane label="定时发送">
+          <!-- 搜索框 -->
+          <div style="display: flex;flex-direction: row">
+            <el-input style="width: 200px;margin-bottom: 20px;margin-right: 20px" placeholder="请搜索主题名称"
+                      clearable>
+              <el-icon>
+                <Search/>
+              </el-icon>
+            </el-input>
+            <el-date-picker
+              v-model="selectedMonth"
+              type="month"
+              placeholder="选择时间"
+              :format="monthFormat"
+              @change="handleMonthChange"
+            />
+            <el-button type="primary">搜索</el-button>
+            <el-button type="primary">
+              <el-icon>
+                <Refresh/>
+              </el-icon>
+            </el-button>
+          </div>
+
+          <!-- 数据 -->
+          <el-table :data="tableData" border style="width: 100%;margin-bottom: 20px">
             <!-- 主题列 -->
             <el-table-column label="主题" align="left" min-width="300">
               <template #default="{ row }">
                 <span>{{ row.subject }}</span>
+              </template>
+            </el-table-column>
+
+            <!-- 时间列 -->
+            <el-table-column label="时间" align="left" min-width="300">
+              <template #default="{ row }">
+                <span>{{ row.time }}</span>
               </template>
             </el-table-column>
 
@@ -31,13 +62,52 @@
               </template>
             </el-table-column>
           </el-table>
+          <!-- 分页 -->
+          <el-pagination
+            v-model:current-page="currentPage"
+            :page-size="pageSize"
+            :total="totalData"
+            layout="prev, pager, next"
+            background
+          />
         </el-tab-pane>
-        <el-tab-pane label="生日发送">
-          <el-table :data="tableData" border style="width: 100%">
+        <el-tab-pane label="周期发送">
+          <!-- 搜索框 -->
+          <div style="display: flex;flex-direction: row">
+            <el-input style="width: 200px;margin-bottom: 20px;margin-right: 20px" placeholder="请搜索主题名称"
+                      clearable>
+              <el-icon>
+                <Search/>
+              </el-icon>
+            </el-input>
+            <el-date-picker
+              v-model="selectedMonth"
+              type="month"
+              placeholder="起始时间"
+              :format="monthFormat"
+              @change="handleMonthChange"
+            />
+            <el-date-picker
+              v-model="selectedMonth"
+              type="month"
+              placeholder="结束时间"
+              :format="monthFormat"
+              @change="handleMonthChange"
+            />
+            <el-button type="primary">搜索</el-button>
+          </div>
+          <el-table :data="tableData" border style="width: 100%;margin-bottom: 20px">
             <!-- 主题列 -->
             <el-table-column label="主题" align="left" min-width="300">
               <template #default="{ row }">
                 <span>{{ row.subject }}</span>
+              </template>
+            </el-table-column>
+
+            <!-- 时间列 -->
+            <el-table-column label="时间" align="left" min-width="300">
+              <template #default="{ row }">
+                <span>{{ row.time }}</span>
               </template>
             </el-table-column>
 
@@ -61,13 +131,44 @@
               </template>
             </el-table-column>
           </el-table>
+          <el-pagination
+            v-model:current-page="currentPage"
+            :page-size="pageSize"
+            :total="totalData"
+            layout="prev, pager, next"
+            background
+          />
         </el-tab-pane>
-        <el-tab-pane label="节日发送">
-          <el-table :data="tableData" border style="width: 100%">
+        <el-tab-pane label="定期发送">
+          <!-- 搜索框 -->
+          <div style="display: flex;flex-direction: row">
+            <el-input style="width: 200px;margin-bottom: 20px;margin-right: 20px" placeholder="请搜索主题名称"
+                      clearable>
+              <el-icon>
+                <Search/>
+              </el-icon>
+            </el-input>
+            <el-date-picker
+              v-model="selectedMonth"
+              type="month"
+              placeholder="选择时间"
+              :format="monthFormat"
+              @change="handleMonthChange"
+            />
+            <el-button type="primary">搜索</el-button>
+          </div>
+          <el-table :data="tableData" border style="width: 100%;margin-bottom: 20px">
             <!-- 主题列 -->
             <el-table-column label="主题" align="left" min-width="300">
               <template #default="{ row }">
                 <span>{{ row.subject }}</span>
+              </template>
+            </el-table-column>
+
+            <!-- 时间列 -->
+            <el-table-column label="时间" align="left" min-width="300">
+              <template #default="{ row }">
+                <span>{{ row.time }}</span>
               </template>
             </el-table-column>
 
@@ -91,6 +192,13 @@
               </template>
             </el-table-column>
           </el-table>
+          <el-pagination
+            v-model:current-page="currentPage"
+            :page-size="pageSize"
+            :total="totalData"
+            layout="prev, pager, next"
+            background
+          />
         </el-tab-pane>
       </el-tabs>
     </div>
@@ -98,19 +206,25 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
-import { ElMessageBox, ElMessage } from "element-plus";
+import {ref} from "vue";
+import {ElMessageBox, ElMessage} from "element-plus";
 
+// 分页数据
+const totalData = ref(100);
+// 当前页
+const currentPage = ref(1);
+// 每页显示条数
+const pageSize = ref(10);
 // 表格数据
 const tableData = ref([
-  { id: 1, subject: "邮件群发", paused: false }, // 初始状态为未暂停
-  { id: 2, subject: "促销活动", paused: false }, // 初始状态为暂停
-  { id: 3, subject: "促销活动", paused: false }, // 初始状态为暂停
-  { id: 4, subject: "促销活动", paused: false }, // 初始状态为暂停
-  { id: 5, subject: "促销活动", paused: false }, // 初始状态为暂停
-  { id: 7, subject: "促销活动", paused: true }, // 初始状态为暂停
-  { id: 8, subject: "促销活动", paused: true }, // 初始状态为暂停
-  { id: 9, subject: "促销活动", paused: true }, // 初始状态为暂停
+  {id: 1, subject: "邮件群发", time: "2024-11-26", paused: false}, // 初始状态为未暂停
+  {id: 2, subject: "促销活动", time: "2024-11-26", paused: false}, // 初始状态为暂停
+  {id: 3, subject: "促销活动", time: "2024-11-26", paused: false}, // 初始状态为暂停
+  {id: 4, subject: "促销活动", time: "2024-11-26", paused: false}, // 初始状态为暂停
+  {id: 5, subject: "促销活动", time: "2024-11-26", paused: false}, // 初始状态为暂停
+  {id: 7, subject: "促销活动", time: "2024-11-26", paused: true}, // 初始状态为暂停
+  {id: 8, subject: "促销活动", time: "2024-11-26", paused: true}, // 初始状态为暂停
+  {id: 9, subject: "促销活动", time: "2024-11-26", paused: true}, // 初始状态为暂停
 ]);
 
 // 删除操作
