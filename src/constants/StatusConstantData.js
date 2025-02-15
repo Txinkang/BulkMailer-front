@@ -1,0 +1,27 @@
+const statusData = {
+  // User status
+  USER_STATUS_UNASSIGNED: 1,
+  USER_STATUS_ASSIGNED: 2,
+
+  // Attachment status
+  ATTACHMENT_STATUS_UNASSIGNED: 1,
+  ATTACHMENT_STATUS_ASSIGNED: 2,
+
+  // Image status
+  IMG_STATUS_UNASSIGNED: 1,
+  IMG_STATUS_ASSIGNED: 2,
+
+  // Template status
+  TEMPLATE_STATUS_UNASSIGNED: 1,
+  TEMPLATE_STATUS_ASSIGNED: 2,
+
+  // Supplier status
+  SUPPLIER_STATUS_UNASSIGNED: 1,
+  SUPPLIER_STATUS_ASSIGNED: 2,
+
+  // Customer status
+  CUSTOMER_STATUS_UNASSIGNED: 1,
+  CUSTOMER_STATUS_ASSIGNED: 2
+}
+
+export default statusData

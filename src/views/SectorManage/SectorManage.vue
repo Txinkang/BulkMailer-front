@@ -1,64 +1,84 @@
 <template>
-  <div class="container">
-    <!-- 两个下拉菜单 -->
-    <el-form label-width="120px" inline>
-      <!-- 所属公司 -->
-      <el-form-item label="所属公司">
-        <el-select v-model="selectedCompany" placeholder="请选择公司">
-          <el-option v-for="company in companies" :key="company" :label="company" :value="company" />
-        </el-select>
-      </el-form-item>
+  <div class="company-container">
+    <!-- 顶部按钮 -->
+    <div class="button-group">
+      <el-button type="primary" @click="openCreateDialog">创建部门</el-button>
+      <el-button>导入</el-button>
+    </div>
 
-      <!-- 所属部门 -->
-      <el-form-item label="所属部门">
-        <el-select v-model="selectedDepartment" placeholder="请选择部门">
-          <el-option
-            v-for="department in departments"
-            :key="department"
-            :label="department"
-            :value="department"
-          />
-        </el-select>
-      </el-form-item>
+    <!-- 搜索框 -->
+    <div style="display: flex;flex-direction: row;">
+      <el-input
+        v-model="searchText"
+        placeholder="请搜索部门名称"
+        clearable
+        class="search-box"
+      >
+        <template #append>
+          <el-button>
+            <el-icon>
+              <Search></Search>
+            </el-icon>
+          </el-button>
+        </template>
+      </el-input>
+      <el-button type="primary"><el-icon><Refresh /></el-icon></el-button>
+    </div>
 
-      <!-- 创建部门按钮 -->
-      <el-form-item>
-        <el-button type="primary" @click="openDialog">创建部门</el-button>
-      </el-form-item>
-    </el-form>
-
+    <!-- 表格 -->
     <el-table :data="tableData" border style="width: 100%">
-      <!-- 公司名称列 -->
-      <el-table-column label="公司名称" align="left" min-width="200">
-        <template #default="{ row }">
-          <span>{{ row.company }}</span>
-        </template>
-      </el-table-column>
-
       <!-- 部门名称列 -->
-      <el-table-column label="部门名称" align="left" min-width="200">
-        <template #default="{ row }">
-          <span>{{ row.department }}</span>
-        </template>
-      </el-table-column>
+      <el-table-column prop="companyName" label="部门名称" min-width="200" />
 
-      <!-- 删除操作列 -->
-      <el-table-column label="操作" align="center" min-width="100">
+      <!-- 查看按钮列 -->
+      <el-table-column label="操作" align="center" min-width="180">
         <template #default="{ row }">
+          <el-button type="primary" size="small" @click="openDialog(row)">查看</el-button>
+          <el-button type="warning" size="small" @click="openUpdateDialog">修改</el-button>
           <el-button type="danger" size="small">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
 
-    <!-- 创建部门对话框 -->
-    <el-dialog
-      title="创建部门"
-      v-model="dialogVisible"
-      width="40%"
-      @close="resetDialog"
-    >
+    <!-- 分页 -->
+    <el-pagination
+      v-model:current-page="currentPage"
+      :page-size="pageSize"
+      :total="totalData"
+      layout="prev, pager, next"
+      class="pagination"
+      background
+    />
+
+    <!-- 查看部门对话框 -->
+    <el-dialog title="部门详情" v-model="dialogVisible" width="50%">
       <el-form label-width="120px">
-        <!-- 公司名称下拉菜单 -->
+        <!-- 公司名称 -->
+        <el-form-item label="公司名称">
+          <el-input v-model="dialogData.companyName" disabled />
+        </el-form-item>
+
+        <!-- 部门信息（菜单形式） -->
+        <el-form-item label="部门信息">
+          <div>
+            <el-menu style="display: flex;flex-direction: row">
+              <el-sub-menu index="sender-management">
+                <template #title>
+                  <span>部门</span>
+                </template>
+                <el-menu-item >岗位</el-menu-item>
+                <el-menu-item >岗位</el-menu-item>
+                <el-menu-item >岗位</el-menu-item>
+              </el-sub-menu>
+            </el-menu>
+          </div>
+        </el-form-item>
+      </el-form>
+    </el-dialog>
+
+    <!-- 创建部门对话框 -->
+    <el-dialog title="创建部门" v-model="createDialogVisible" width="40%">
+      <el-form label-width="120px">
         <el-form-item label="公司名称">
           <el-select v-model="newDepartment.company" placeholder="请选择公司">
             <el-option v-for="company in companies" :key="company" :label="company" :value="company" />
@@ -69,75 +89,158 @@
         <el-form-item label="部门名称">
           <el-input v-model="newDepartment.name" placeholder="请输入部门名称" />
         </el-form-item>
-
-        <!-- 岗位名称输入框 -->
-        <el-form-item label="岗位名称">
-          <el-input v-model="newDepartment.position" placeholder="请输入岗位名称" />
-        </el-form-item>
       </el-form>
 
-      <!-- 对话框底部按钮 -->
       <template #footer>
-        <el-button @click="closeDialog">取消</el-button>
-        <el-button type="primary" @click="createDepartment">确定</el-button>
+        <el-button @click="createDialogVisible = false">取消</el-button>
+        <el-button type="primary">确定</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 修改部门对话框 -->
+    <el-dialog title="修改部门" v-model="updateDialogVisible" width="40%">
+      <el-form label-width="120px">
+        <el-form-item label="部门名称">
+          <el-input placeholder="请输入部门名称" />
+        </el-form-item>
+        <!-- 公司名称选择框 -->
+        <el-form-item v-if="user === 'receiver'" label="公司名称">
+          <el-select  placeholder="请选择公司">
+            <el-option value="公司" />
+            <el-option value="公司" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="createDialogVisible = false">取消</el-button>
+        <el-button type="primary">确定</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
+import {Search} from "@element-plus/icons-vue";
+import {useRoute} from "vue-router";
 
-// 下拉菜单数据
-const companies = ["公司A", "公司B", "公司C"];
-const departments = ["部门1", "部门2", "部门3"];
-// 表格的静态数据
+const route = useRoute();
+const user = computed(()=>route.query.user)
+// 顶部按钮
+const createDialogVisible = ref(false);
+const updateDialogVisible = ref(false);
+
+const openCreateDialog = () => {
+  createDialogVisible.value = true;
+};
+const openUpdateDialog = () => {
+  updateDialogVisible.value = true;
+};
+
+// 标签页
+const activeTab = ref("view");
+
+// 搜索框
+const searchText = ref("");
+
+// 表格数据
 const tableData = [
-  { company: "公司A", department: "部门1" },
-  { company: "公司B", department: "部门2" },
-  { company: "公司C", department: "部门3" },
-  { company: "公司D", department: "部门4" },
+  { companyName: "部门A" },
+  { companyName: "部门B" },
+  { companyName: "部门C" },
 ];
-
-// 所属公司和部门
-const selectedCompany = ref(null);
-const selectedDepartment = ref(null);
-
-// 创建部门对话框的状态
-const dialogVisible = ref(false);
-
 // 新部门信息
 const newDepartment = ref({
   company: null,
   name: "",
   position: "",
 });
+const companies = ["公司A", "公司B", "公司C"];
 
-// 打开对话框
-const openDialog = () => {
+// 分页
+const currentPage = ref(1);
+const pageSize = ref(10);
+const totalData = ref(30);
+
+// 查看对话框
+const dialogVisible = ref(false);
+const dialogData = ref({
+  companyName: "",
+  departments: [
+    {
+      name: "部门1",
+      positions: ["岗位A", "岗位B"],
+    },
+    {
+      name: "部门2",
+      positions: ["岗位C", "岗位D", "岗位E"],
+    },
+    {
+      name: "部门3",
+      positions: ["岗位F", "岗位G"],
+    },
+    {
+      name: "部门4",
+      positions: ["岗位H", "岗位I", "岗位J"],
+    },
+    {
+      name: "部门5",
+      positions: ["岗位K"],
+    },
+    {
+      name: "部门6",
+      positions: ["岗位L", "岗位M"],
+    },
+  ],
+});
+
+// 部门分页
+const departmentPage = ref(1);
+
+
+// 打开查看公司对话框
+const openDialog = (row) => {
+  dialogData.value.companyName = row.companyName;
+  departmentPage.value = 1; // 重置到第一页
   dialogVisible.value = true;
-};
-
-// 关闭对话框并重置数据
-const closeDialog = () => {
-  dialogVisible.value = false;
-  resetDialog();
-};
-
-// 重置对话框内容
-const resetDialog = () => {
-  newDepartment.value = { company: null, name: "", position: "" };
-};
-
-// 创建部门
-const createDepartment = () => {
-  console.log("新部门信息：", newDepartment.value);
-  closeDialog();
 };
 </script>
 
 <style scoped>
-.container {
-  margin: 20px;
+.company-container {
+  padding: 20px;
+}
+
+.button-group {
+  margin-bottom: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.search-box {
+  width: 20em;
+  margin-bottom: 20px;
+  margin-right: 20px;
+}
+
+.pagination {
+  margin-top: 20px;
+  text-align: right;
+}
+
+.menu-container {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.menu-item {
+  flex: 1;
+  margin: 0 10px;
+}
+
+.department-pagination {
+  margin-top: 10px;
+  text-align: right;
 }
 </style>

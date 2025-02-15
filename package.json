@@ -4,14 +4,20 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "vite --mode dev",
+    "build": "vite build --mode prod",
     "preview": "vite preview",
     "lint": "eslint . --fix"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.1",
+    "@tinymce/tinymce-vue": "^6.1.0",
+    "axios": "^1.7.9",
+    "echarts": "^5.5.1",
     "element-plus": "^2.8.8",
+    "lodash": "^4.17.21",
+    "pinia": "^2.3.1",
+    "tinymce": "^7.6.1",
     "vue": "^3.5.12",
     "vue-router": "^4.4.5"
   },

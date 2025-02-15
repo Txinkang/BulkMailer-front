@@ -63,7 +63,7 @@ const initChart = () => {
     },
     tooltip: {},
     xAxis: {
-      data: ["送达率", "打开率", "退订率"],
+      data: ["送达率", "打开率", "退订率", "退信率"],
     },
     yAxis: {},
     series: [

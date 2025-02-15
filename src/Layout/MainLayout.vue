@@ -3,12 +3,15 @@
     <!-- Header -->
     <el-header class="layout-header">
       <div class="header-left">
-        <div>{{companyName}}</div>
+        <div>{{title}}</div>
         <div>邮件群发助手</div>
+        <div>管理端</div>
       </div>
       <div class="header-right">
         <div>用户：{{ username }}</div>
-        <div>{{ company }} - {{ department }} - {{ position }}</div>
+        <div>
+          <el-button type="danger" @click="handleLogout">退出登录</el-button>
+        </div>
       </div>
     </el-header>
 
@@ -18,44 +21,134 @@
         <el-menu
           :default-active="activeMenu"
           @select="handleMenuSelect"
-          class="el-menu-vertical"
+          class="menu-scrollable"
         >
-          <el-menu-item class="menu-item" index="/sendEmail">发送邮件</el-menu-item>
-          <el-menu-item class="menu-item" index="/autoEmail">自动发送邮件管理</el-menu-item>
           <el-menu-item class="menu-item" index="/fileManage">文件管理</el-menu-item>
-          <el-menu-item class="menu-item" index="/emailHistory">历史记录</el-menu-item>
-          <el-menu-item class="menu-item" index="/companyManage">公司管理</el-menu-item>
-          <el-menu-item class="menu-item" index="/sectorManage">部门管理</el-menu-item>
-          <el-menu-item class="menu-item" index="/userManage">用户管理</el-menu-item>
-          <el-menu-item class="menu-item" index="/commodityManage">商品管理</el-menu-item>
-          <el-menu-item class="menu-item" index="/supplierManage">供应商管理</el-menu-item>
-          <el-menu-item class="menu-item" index="/customerManage">客户管理</el-menu-item>
+
+          <!-- 邮件管理 -->
+          <el-sub-menu index="email-management">
+            <template #title>
+              <span>邮件管理</span>
+            </template>
+            <el-menu-item class="menu-item" index="/emailTask">邮件任务管理</el-menu-item>
+            <el-menu-item class="menu-item" index="/emailHistory">历史记录管理</el-menu-item>
+            <el-menu-item class="menu-item" index="/templateManage">邮件模版管理</el-menu-item>
+          </el-sub-menu>
+
+          <!-- 报表管理 -->
+          <el-sub-menu index="report-management">
+            <template #title>
+              <span>报表管理</span>
+            </template>
+            <el-menu-item class="menu-item" index="/totalReport">综合报表</el-menu-item>
+            <el-menu-item class="menu-item" index="/singleReport">任务报表</el-menu-item>
+          </el-sub-menu>
+
+          <!-- 发件方管理 -->
+          <el-sub-menu index="sender-management">
+            <template #title>
+              <span>发件方管理</span>
+            </template>
+            <el-menu-item class="menu-item" index="/userManage">用户管理</el-menu-item>
+          </el-sub-menu>
+
+          <!-- 收件方管理 -->
+          <el-sub-menu index="receiver-management">
+            <template #title>
+              <span>收件方管理</span>
+            </template>
+              <el-menu-item class="menu-item" index="/supplierManage">供应商管理</el-menu-item>
+              <el-menu-item class="menu-item" index="/customerManage">客户管理</el-menu-item>
+          </el-sub-menu>
+
+          <!-- 字典管理 -->
+          <el-sub-menu index="dictionary-management">
+            <template #title>
+              <span>字典管理</span>
+            </template>
+            <el-menu-item class="menu-item" index="/emailType">邮件类型管理</el-menu-item>
+            <el-menu-item class="menu-item" index="/commodityManage">商品管理</el-menu-item>
+            <el-menu-item class="menu-item" index="/countryManage">国家管理</el-menu-item>
+            <el-menu-item class="menu-item" index="/areaManage">区域管理</el-menu-item>
+          </el-sub-menu>
+
+          <el-menu-item class="menu-item" index="/serverConfig">邮件服务器管理</el-menu-item>
+
         </el-menu>
+
+
       </aside>
 
       <!-- Content -->
       <main class="layout-content">
-        <router-view />
+        <!-- <router-view /> -->
+        <router-view v-slot="{ Component }">
+          <keep-alive>
+            <component :is="Component" />
+          </keep-alive>
+        </router-view>
       </main>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
+import UserConstantData from "@/constants/UserConstantData.js";
+import { useUserStore } from '@/store/user/user.js'
+import { ElMessageBox } from 'element-plus'
+import { userApi } from '@/api/user/user.js'
+import { errorHandler } from '@/utils/errorHandler.js';
+
 
 const router = useRouter();
 const route = useRoute();
 const activeMenu = ref(route.path);
-//公司信息
-const companyName = "天津市易架构信息科技有限公司";
 
+// 监听路由变化
+watch(
+  () => route.path,
+  (newPath) => {
+    activeMenu.value = newPath;
+  }
+);
+
+// 标题信息
+const title = UserConstantData.title;
 // 用户信息
-const username = "张三";
-const company = "天津市易架构信息科技有限公司";
-const department = "研发部";
-const position = "前端开发工程师";
+const username = UserConstantData.getUserName();
+
+function handleLogout() {
+  ElMessageBox.confirm('确认退出登录吗?', '提示', {
+    confirmButtonText: '确认',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(async () => {
+    try {
+      const logoutRes = await userApi.logout()
+      if(logoutRes.code === 200){
+        const userStore = useUserStore()
+        userStore.clearUserInfo()
+        router.replace('/login')
+      }else{
+        errorHandler.showError('退出登录失败,请重试', logoutRes)
+      }
+    } catch (error) {
+      console.log("退出登录失败,尝试绕过请求自动退出",error);
+      // 手动清除本地存储
+      localStorage.removeItem('user_token')
+      localStorage.removeItem('user_id')
+      localStorage.removeItem('user_name')
+      localStorage.removeItem('user_auth')
+      localStorage.removeItem('token_expiry')
+      // 强制跳转登录页
+      router.replace('/login')
+    }
+  }).catch(() => {
+    // 取消退出时不做任何操作
+  })
+}
 
 function handleMenuSelect(index) {
   router.push(index);
@@ -87,7 +180,11 @@ function handleMenuSelect(index) {
 }
 
 .header-right div {
-  font-size: 0.2em;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  padding: 2px;
+  font-size: 15px;
   text-align: right;
 }
 
@@ -105,8 +202,30 @@ function handleMenuSelect(index) {
   flex: 1;
   padding: 20px;
 }
+.menu-scrollable {
+  max-height: 700px; /* 设置菜单最大高度 */
+  overflow-y: auto; /* 启用垂直滚动条 */
+  border: 1px solid #e6e6e6; /* 可选：增加边框以区分菜单区域 */
+}
 
-.menu-item{
-  border: 1px solid #dcdfe6; /* 默认边框颜色 */
+/* 可选：美化滚动条 */
+.menu-scrollable::-webkit-scrollbar {
+  width: 8px; /* 滚动条宽度 */
+}
+
+.menu-scrollable::-webkit-scrollbar-thumb {
+  background: #c1c1c1; /* 滚动条颜色 */
+  border-radius: 4px; /* 滚动条圆角 */
+}
+
+.menu-scrollable::-webkit-scrollbar-thumb:hover {
+  background: #a6a6a6; /* 滚动条悬停颜色 */
+}
+
+.menu-scrollable::-webkit-scrollbar-track {
+  background: #f5f5f5; /* 滚动条轨道颜色 */
+}
+.menu-item,.el-sub-menu{
+  border-bottom: 1px solid #dcdfe6; /* 默认边框颜色 */
 }
 </style>

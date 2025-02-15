@@ -5,22 +5,26 @@
       <el-form :model="loginForm" :rules="loginFormRules" ref="loginFormRef" label-width="80px">
         <el-form-item label="用户名" prop="username">
           <el-input
-            v-model="loginForm.username"
-            placeholder="请输入用户名"
+            v-model="loginForm.userAccount"
+            placeholder="请输入用户账号"
+            clearable
             size="large"
           ></el-input>
         </el-form-item>
         <el-form-item label="密码" prop="password">
           <el-input
-            v-model="loginForm.password"
-            placeholder="请输入密码"
+            v-model="loginForm.userPassword"
+            placeholder="请输入用户密码"
             show-password
+            clearable
             size="large"
           ></el-input>
         </el-form-item>
         <el-form-item label-position="left">
-          <el-button size="large" type="default" @click="onReset">重置</el-button>
-          <el-button type="primary" size="large" @click="onSubmit">
+          <el-button size="large" type="default" @click="onReset">
+            重置
+          </el-button>
+          <el-button type="primary" size="large" @click="onSubmit" :disabled="!loginForm.userAccount || !loginForm.userPassword">
             登录
           </el-button>
         </el-form-item>
@@ -28,29 +32,57 @@
     </div>
   </div>
 </template>
-
 <script setup>
-import {reactive, ref} from "vue";
+import {reactive} from "vue";
 import router from "@/router/index.js";
+import { userApi } from '@/api/user/user.js';
+import { useUserStore } from '@/store/user/user.js';
+import UserConstantData from '@/constants/UserConstantData.js';
+import { errorHandler } from '@/utils/errorHandler.js';
 
+defineOptions({
+  name: 'LoginView'
+})
+
+const userStore = useUserStore()
 const loginForm = reactive({
-  username: "",
-  password: "",
+  userRole: UserConstantData.userRole,
+  userAccount: "",
+  userPassword: "",
 });
 
 const loginFormRules = {
-  username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
-  password: [{ required: true, message: "请输入密码", trigger: "blur" }],
+  userAccount: [{ required: true, message: "请输入用户账号", trigger: "blur" }],
+  userPassword: [{ required: true, message: "请输入用户密码", trigger: "blur" }],
 };
 
-function onSubmit() {
-  console.log("登录表单：", loginForm);
-  router.replace("/MainLayout")
+const onSubmit = async () => {
+  try {
+    const response = await userApi.login(loginForm)
+    console.log("登录响应：", response);
+    if (response.code === 200) {
+      // 存储用户信息到本地
+      userStore.setUserInfo(response.data)
+      router.replace("/MainLayout")
+    } else if (response.code === 401) {
+      errorHandler.showError('账号或密码有误', response)
+    } else if (response.code === 405) {
+      errorHandler.showError('账号不存在', response)
+    } else if (response.code === 406) {
+      errorHandler.showError('该用户不存在', response)
+    } else if (response.code === 500) {
+      errorHandler.showError('系统错误,请重试', response)
+    }else{
+      errorHandler.showError('未知错误,请重试', response)
+    }
+  } catch (err) {
+    errorHandler.showError('登录错误', err)
+  }
 }
 
-function onReset() {
-  loginForm.username = "";
-  loginForm.password = "";
+const onReset = () => {
+  loginForm.userAccount = "";
+  loginForm.userPassword = "";
 }
 </script>
 

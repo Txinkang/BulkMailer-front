@@ -8,7 +8,7 @@
         </el-form-item>
 
         <el-form-item>
-          <el-input style="width: 200px" placeholder="请搜索发件人" disabled></el-input>
+          <el-input style="width: 200px" placeholder="请搜索发件人"></el-input>
         </el-form-item>
 
         <el-form-item>
@@ -72,6 +72,13 @@
           </template>
         </el-table-column>
 
+        <!-- 任务类型列 -->
+        <el-table-column label="任务类型">
+          <template #default="{ row }">
+            {{ row.taskType }}
+          </template>
+        </el-table-column>
+
         <!-- 邮件类型列 -->
         <el-table-column label="邮件类型">
           <template #default="{ row }">
@@ -125,11 +132,11 @@ const selectedDate = ref(null);
 
 // 表格数据
 const tableData = [
-  {subject: "商品促销", emailType:"商品促销", senders: "张三", sendersEmail: "sender@gmail.com", receivers: "赵五", receiversEmail: "receiver@gmail.com", receiversGrade: "高级", allStatus: "已完成", status:"已送达", failedDetail:"网络波动", date: "2023-12-01",},
-  {subject: "商品促销", emailType:"商品促销", senders: "张三", sendersEmail: "sender@gmail.com", receivers: "赵五", receiversEmail: "receiver@gmail.com", receiversGrade: "高级", allStatus: "发送失败", status:"未送达", failedDetail:"网络波动", date: "2023-12-01",},
-  {subject: "商品促销", emailType:"商品促销", senders: "张三", sendersEmail: "sender@gmail.com", receivers: "赵五", receiversEmail: "receiver@gmail.com", receiversGrade: "高级", allStatus: "已完成", status:"已送达", failedDetail:"网络波动", date: "2023-12-01",},
-  {subject: "商品促销", emailType:"商品促销", senders: "张三", sendersEmail: "sender@gmail.com", receivers: "赵五", receiversEmail: "receiver@gmail.com", receiversGrade: "高级", allStatus: "发送失败", status:"未送达", failedDetail:"网络波动", date: "2023-12-01",},
-  {subject: "商品促销", emailType:"商品促销", senders: "张三", sendersEmail: "sender@gmail.com", receivers: "赵五", receiversEmail: "receiver@gmail.com", receiversGrade: "高级", allStatus: "已完成", status:"已送达", failedDetail:"网络波动", date: "2023-12-01",},
+  {subject: "商品促销", taskType:"手动发送", emailType:"商品促销", senders: "张三", sendersEmail: "sender@gmail.com", receivers: "赵五", receiversEmail: "receiver@gmail.com", receiversGrade: "高级", allStatus: "已完成", status:"已送达", failedDetail:"网络波动", date: "2023-12-01",},
+  {subject: "商品促销", taskType:"循环发送", emailType:"商品促销", senders: "张三", sendersEmail: "sender@gmail.com", receivers: "赵五", receiversEmail: "receiver@gmail.com", receiversGrade: "高级", allStatus: "发送失败", status:"未送达", failedDetail:"网络波动", date: "2023-12-01",},
+  {subject: "商品促销", taskType:"生日发送", emailType:"商品促销", senders: "张三", sendersEmail: "sender@gmail.com", receivers: "赵五", receiversEmail: "receiver@gmail.com", receiversGrade: "高级", allStatus: "已完成", status:"已送达", failedDetail:"网络波动", date: "2023-12-01",},
+  {subject: "商品促销", taskType:"节日发送", emailType:"商品促销", senders: "张三", sendersEmail: "sender@gmail.com", receivers: "赵五", receiversEmail: "receiver@gmail.com", receiversGrade: "高级", allStatus: "发送失败", status:"未送达", failedDetail:"网络波动", date: "2023-12-01",},
+  {subject: "商品促销", taskType:"手动发送", emailType:"商品促销", senders: "张三", sendersEmail: "sender@gmail.com", receivers: "赵五", receiversEmail: "receiver@gmail.com", receiversGrade: "高级", allStatus: "已完成", status:"已送达", failedDetail:"网络波动", date: "2023-12-01",},
 
 ];
 // 未送达邮件表格数据
