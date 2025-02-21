@@ -1069,8 +1069,8 @@ const handleAttachmentSearch = async () => {
       creator_name: searchAttachmentForm.value.creator_name === null ? '' : searchAttachmentForm.value.creator_name,
       belong_user_name: searchAttachmentForm.value.belong_user_name === null ? '' : searchAttachmentForm.value.belong_user_name,
       status: searchAttachmentForm.value.status === null ? 0 : Number(searchAttachmentForm.value.status),
-      page_num: searchAttachmentForm.value.page_num === null ? 1 : Number(searchAttachmentForm.value.page_num),
-      page_size: searchAttachmentForm.value.page_size === null ? 30 : Number(searchAttachmentForm.value.page_size)
+      page_num: attachmentPagination.value.serverPage === null ? 1 : Number(attachmentPagination.value.serverPage),
+      page_size: attachmentPagination.value.serverPageSize === null ? 30 : Number(attachmentPagination.value.serverPageSize)
     }
     console.log('附件搜索请求参数：', requestData)
 
@@ -1360,8 +1360,8 @@ const handleImgSearch = async () => {
       creator_name: searchImgForm.value.creator_name === null ? '' : searchImgForm.value.creator_name,
       belong_user_name: searchImgForm.value.belong_user_name === null ? '' : searchImgForm.value.belong_user_name,
       status: searchImgForm.value.status === null ? 0 : Number(searchImgForm.value.status),
-      page_num: searchImgForm.value.page_num === null ? 1 : Number(searchImgForm.value.page_num),
-      page_size: searchImgForm.value.page_size === null ? 20 : Number(searchImgForm.value.page_size)
+      page_num: imgPagination.value.serverPage === null ? 1 : Number(imgPagination.value.serverPage),
+      page_size: imgPagination.value.serverPageSize === null ? 20 : Number(imgPagination.value.serverPageSize)
     }
     console.log('图片搜索请求参数：', requestData)
     const response = await fileApi.filterImg(requestData)
