@@ -67,8 +67,9 @@ const form = ref({
 
 const updateUserinfo = async () => {
   try {
+    //console.log("更新用户信息", props.user_id);
     const requestData = {
-      user_id: form.value.user_id,
+      user_id: props.user_id,
       user_name: form.value.user_name === '' ? null : form.value.user_name,
       user_account: form.value.user_account === '' ? null : form.value.user_account,
       user_password: form.value.user_password === '' ? null : form.value.user_password,

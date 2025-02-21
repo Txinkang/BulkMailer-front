@@ -53,29 +53,29 @@
 
         <!-- 表格 -->
         <div style="width: 100%;overflow-x: auto">
-          <el-table :data="tableData" border style="width: 1000px">
+          <el-table :data="userCurrentPageData" border style="width: 1000px">
             <!-- 用户名称列 -->
             <el-table-column label="用户名称" align="left" min-width="100">
               <template #default="{ row }">
-                <span>{{ row.user_name }}</span>
+                <span>{{ row.userName }}</span>
               </template>
             </el-table-column>
             <!-- 所属用户列 -->
             <el-table-column label="所属用户" align="left" min-width="100">
               <template #default="{ row }">
-                <span>{{ row.belong_user_name }}</span>
+                <span>{{ row.belongUserName }}</span>
               </template>
             </el-table-column>
             <!-- 登录账号列 -->
             <el-table-column label="登录账号" align="left" min-width="100">
               <template #default="{ row }">
-                <span>{{ row.user_account }}</span>
+                <span>{{ row.userAccount }}</span>
               </template>
             </el-table-column>
             <!-- 邮箱列 -->
             <el-table-column label="邮箱" align="left" min-width="100">
               <template #default="{ row }">
-                <span>{{ row.user_email }}</span>
+                <span>{{ row.userEmail }}</span>
               </template>
             </el-table-column>
             <!-- 状态列 -->
@@ -428,6 +428,7 @@ const selectedCheckUserPasswordForm = ref({
   user_email_code: "",
 });
 
+const selectedUpdateUserId = ref('');
 //修改用户权限
 const updateUserAuthForm = ref({
   user_id: "",
@@ -447,7 +448,7 @@ const userPagination = ref({
   currentPage: 1,
   serverPage: 1,
   displayPageSize: 5,
-  serverPageSize: 10,
+  serverPageSize: 15,
   totalItems: 0,
   cachedData: new Map()
 });
@@ -541,7 +542,7 @@ const searchUser = async () => {
       belong_user_name: searchUserForm.value.belong_user_name,
       user_account: searchUserForm.value.user_account,
       user_email: searchUserForm.value.user_email,
-      status: searchUserForm.value.status,
+      status: Number(searchUserForm.value.status) === 1 || Number(searchUserForm.value.status) === 2 ? Number(searchUserForm.value.status) : null,
       page_num: userPagination.value.serverPage,
       page_size: userPagination.value.serverPageSize,
     }
@@ -549,10 +550,11 @@ const searchUser = async () => {
     const response = await userApi.filterUser(requestData);
     if (response.code === 200) {
       ElMessage.success("搜索成功");
-      userPagination.value.totalItems = response.data.total_items;
-      userPagination.value.cachedData.set(userPagination.value.serverPage, response.data.user);
       console.log("搜索用户响应数据", response);
+      userPagination.value.totalItems = response.data.totalItems;
+      userPagination.value.cachedData.set(userPagination.value.serverPage, response.data.user);
       console.log("搜索用户缓存数据", userPagination.value.cachedData.get(userPagination.value.serverPage));
+
     } else {
       errorHandler.showError("搜索用户失败,请重试", response);
     }
@@ -564,7 +566,7 @@ const searchUser = async () => {
 const deleteUser = async (row) => {
   try {
     const requestData = {
-      user_id: row.user_id,
+      user_id: row.userId,
     }
     console.log("删除用户请求数据", requestData);
     const response = await userApi.deleteUser(requestData);
@@ -574,7 +576,7 @@ const deleteUser = async (row) => {
       const currentData = userPagination.value.cachedData.get(userPagination.value.serverPage)
       userPagination.value.cachedData.set(
         userPagination.value.serverPage,
-        currentData.filter(item => item.user_id !== row.user_id)
+        currentData.filter(item => item.userId !== row.userId)
       )
       userPagination.value.totalItems = userPagination.value.totalItems - 1
       console.log("删除用户响应数据", response);
@@ -616,15 +618,9 @@ const openCreateUserDialog = () => {
   createUserDialogVisible.value = true;
 };
 const openCheckUserPasswordDialog = async (row) => {
-  // selectedCheckUserPasswordForm.value = {
-  //       user_password: "xxxxx",
-  //       user_email_code: "xxxxx",
-  //     }
-  // checkUserPasswordDialog.value = true;
-
   try {
     const requestData = {
-      user_id: row.user_id,
+      user_id: row.userId,
     }
     console.log("查看用户密码请求数据", requestData);
     const response = await userApi.checkUser(requestData);
@@ -641,39 +637,34 @@ const openCheckUserPasswordDialog = async (row) => {
   }
 };
 const openUpdateUserDialog = (row) => {
-  selectedUpdateUserId.value = row.user_id;
+  selectedUpdateUserId.value = row.userId;
+  console.log("更新用户ID", selectedUpdateUserId.value);
   updateUserDialog.value = true;
 };
 const openUpdateUserAuthDialog = async (row) => {
-  // updateUserAuthForm.value.user_id = row.user_id;
-  // updateUserAuthForm.value.user_auth = ["31108edd-3ee1-4d88-888e-445eb125a7c2","01c34783-c16f-4083-9d5a-d58f687fc653","bdc0ca50-f915-48bd-a5d1-81d38118d759"];
-  // updateUserAuthForm.value.all_auth = JSON.parse(localStorage.getItem('user_auth'));
-  // updateUserAuthDialog.value = true;
-  // console.log("更新用户权限表单", updateUserAuthForm.value);
   try {
-    updateUserAuthForm.value.user_id = row.user_id;
+    updateUserAuthForm.value.user_id = row.userId;
     // 先获取所有权限
     const responseGetAuth = await userApi.getAuth();
     if (responseGetAuth.code === 200) {
-      ElMessage.success("获取所有权限成功");
       console.log("获取所有权限响应数据", responseGetAuth);
-      updateUserAuthForm.value.all_auth = responseGetAuth.data.auth;
+      updateUserAuthForm.value.all_auth = responseGetAuth.data;
+      console.log("获取所有权限表单数据", updateUserAuthForm.value);
     } else {
       errorHandler.showError("获取所有权限失败,请重试", responseGetAuth);
     }
 
     // 再获取当前用户权限
     const requestData = {
-      user_id: row.user_id,
+      user_id: row.userId,
     }
     console.log("获取用户权限请求数据", requestData);
     const response = await userApi.getUserAuth(requestData);
     if (response.code === 200) {
-      ElMessage.success("获取用户权限成功");
       console.log("获取用户权限响应数据", response);
-      console.log("更新用户权限表单", updateUserAuthForm.value);
-      updateUserAuthForm.value.user_auth = response.data.user_auth_id;
+      updateUserAuthForm.value.user_auth = response.data;
       updateUserAuthDialog.value = true;
+      console.log("更新用户权限表单", updateUserAuthForm.value);
     } else {
       errorHandler.showError("获取用户权限失败,请重试", response);
     }
@@ -683,11 +674,11 @@ const openUpdateUserAuthDialog = async (row) => {
 
 };
 const openAssignUserDetails = (row) => {
-  selectedAssignUserId.value = row.user_id;
+  selectedAssignUserId.value = row.userId;
   assignUserDetailsDialog.value = true;
 };
 const openReassignUserDialog = (row) => {
-  selectedAssignUserId.value = row.user_id;
+  selectedAssignUserId.value = row.userId;
   assignUserDialog.value = true;
 };
 

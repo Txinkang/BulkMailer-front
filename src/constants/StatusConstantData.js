@@ -21,7 +21,11 @@ const statusData = {
 
   // Customer status
   CUSTOMER_STATUS_UNASSIGNED: 1,
-  CUSTOMER_STATUS_ASSIGNED: 2
+  CUSTOMER_STATUS_ASSIGNED: 2,
+
+  // Email status
+  EMAIL_STATUS_SUCCESS: 200,
+  EMAIL_STATUS_FAILED: 500
 }
 
 export default statusData

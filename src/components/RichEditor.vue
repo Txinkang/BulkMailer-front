@@ -35,29 +35,18 @@
           'link removeformat | ' +                    // 超链接和清除格式
           'wordcount',                                // 字数统计
 
-        // 自定义字体配置，包含中英文
+        // 设置插入超链接的title和target
+        link_title: false,
+        link_target_list: false,
 
+        // 自定义字体配置
         font_family_formats:
-         '楷体_GB2312=myMacKTGB,myMacKTGB;' +
-         '微软雅黑=Microsoft YaHei,微软雅黑;' +
-         '宋体=SimSun,宋体;' +
-         '黑体=SimHei,黑体;' +
-         '楷体=KaiTi,楷体;' +
-         '仿宋=FangSong,仿宋;' +
-         'Arial=arial,helvetica;' +
-         'Arial Black=arial black,avant garde;' +
-         'Book Antiqua=book antiqua,palatino;' +
-         'Comic Sans MS=comic sans ms,sans-serif;' +
-         'Courier New=courier new,courier;' +
-         'Georgia=georgia,palatino;' +
-         'Helvetica=helvetica,arial;' +
-         'Impact=impact,chicago;' +
-         'Symbol=symbol;' +
-         'Tahoma=tahoma,arial,helvetica,sans-serif;' +
-         'Terminal=terminal,monaco;' +
-         'Times New Roman=times new roman,times;' +
-         'Trebuchet MS=trebuchet ms,geneva;' +
-         'Verdana=verdana,geneva;',
+         '楷体_GB2312=MacKTGB2312,MacKTGB2312;' +
+         '微软雅黑=msyh,msyh;' +
+         '仿宋GB2312=仿宋GB2312,仿宋GB2312;' +
+         '黑体 Medium=STHeiti Medium,STHeiti Medium;' +
+         'Arial=Arial Unicode,Arial Unicode;'
+         ,
 
         // 自定义字号配置，使用px
         font_size_formats: '12px 13px 14px 15px 16px 17px 18px 19px 20px 22px 24px 28px 32px 36px 40px 48px',
@@ -68,18 +57,26 @@
         // 默认样式
         content_style: `
           @font-face {
-            font-family: 'myimpact';
-            src: url('/fonts/impact-2.ttf') format('truetype');
-          }
-          @font-face {
-            font-family: 'myMacKTGB';
+            font-family: 'MacKTGB2312';
             src: url('/fonts/MacKTGB2312.ttf') format('truetype');
           }
-          /* 强制使用自定义字体 */
-          /* 确保新插入的内容也使用正确的字体 */
-          body#tinymce * {
-            font-family: myMacKTGB !important;
+          @font-face {
+            font-family: 'msyh';
+            src: url('/fonts/msyh.ttf') format('truetype');
           }
+          @font-face {
+            font-family: '仿宋GB2312';
+            src: url('/fonts/仿宋GB2312.ttf') format('truetype');
+          }
+          @font-face {
+            font-family: 'STHeiti Medium';
+            src: url('/fonts/STHeiti Medium.ttc') format('truetype');
+          }
+          @font-face {
+            font-family: 'Arial Unicode';
+            src: url('/fonts/Arial Unicode.ttf') format('truetype');
+          }
+
           .mce-content-readonly {
             background: #e9ecef;
             border-radius: 4px;
@@ -92,8 +89,6 @@
           }
         `,
         branding: false,
-        font_formats: 'MyImpact=myimpact',
-
         // 自定义按钮设置
         setup: (editor) => {
           // 添加自定义样式格式

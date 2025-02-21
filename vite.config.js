@@ -22,6 +22,12 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+      '/testApi': {
+        //target: 'http://112.35.176.43:9900',
+        target: 'http://localhost:8888',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/testApi/, ''),
+      },
     },
     fs: {
       allow: ['..']

@@ -23,7 +23,12 @@
           @select="handleMenuSelect"
           class="menu-scrollable"
         >
-          <el-menu-item class="menu-item" index="/fileManage">文件管理</el-menu-item>
+          <!-- 发送管理 -->
+          <el-menu-item class="menu-item" index="/sendEmail">手动发送</el-menu-item>
+          <el-menu-item class="menu-item" index="/circleSend">循环发送</el-menu-item>
+
+          <!-- 文件管理 -->
+          <el-menu-item  class="menu-item" index="/fileManage">文件管理</el-menu-item>
 
           <!-- 邮件管理 -->
           <el-sub-menu index="email-management">
@@ -72,6 +77,7 @@
             <el-menu-item class="menu-item" index="/areaManage">区域管理</el-menu-item>
           </el-sub-menu>
 
+          <!-- 服务器配置 -->
           <el-menu-item class="menu-item" index="/serverConfig">邮件服务器管理</el-menu-item>
 
         </el-menu>

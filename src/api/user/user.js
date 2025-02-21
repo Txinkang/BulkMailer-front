@@ -29,11 +29,8 @@ export const userApi = {
   filterUser(data) {
     return request({
       url: '/userManage/filterUser',
-      method: 'post',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      data: data
+      method: 'get',
+      params: data
     })
   },
   // 删除用户
@@ -44,7 +41,7 @@ export const userApi = {
       headers: {
         'Content-Type': 'application/json'
       },
-      data: data
+      params: data
     })
   },
   //分配用户
@@ -55,29 +52,29 @@ export const userApi = {
       headers: {
         'Content-Type': 'application/json'
       },
-      data: data
+      params: data
     })
   },
   // 用户分配详情
   assignUserDetails(data) {
     return request({
       url: '/userManage/assignUserDetails',
-      method: 'post',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      data: data
+      method: 'get',
+      // // headers: {
+      // //   'Content-Type': 'application/json'
+      // // },
+      params: data
     })
   },
   // 查看用户
   checkUser(data) {
     return request({
       url: '/userManage/checkUser',
-      method: 'post',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      data: data
+      method: 'get',
+      // headers: {
+      //   'Content-Type': 'application/json'
+      // },
+      params: data
     })
   },
   // 修改用户信息
@@ -102,11 +99,11 @@ export const userApi = {
   getUserAuth(data){
     return request({
       url: '/userManage/getUserAuth',
-      method: 'post',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      data: data
+      method: 'get',
+      // headers: {
+      //   'Content-Type': 'application/json'
+      // },
+      params: data
     })
 
   },
@@ -115,10 +112,14 @@ export const userApi = {
     return request({
       url: '/userManage/updateUserAuth',
       method: 'post',
-      headers: {
-        'Content-Type': 'application/json'
+      paramsSerializer: {
+        indexes: null // 这会将数组转换为 user_auth_id=1&user_auth_id=2 格式
       },
-      data: data
+      params: {  // 使用 params 而不是 data
+        user_id: data.user_id,
+        user_auth_id: data.user_auth_id,  // 数组会自动被正确处理
+        user_role: data.user_role
+      }
     })
   },
 

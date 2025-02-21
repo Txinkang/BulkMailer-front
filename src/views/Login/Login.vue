@@ -3,7 +3,7 @@
     <div class="login-box">
       <h2 class="login-title">邮件群发登录页面</h2>
       <el-form :model="loginForm" :rules="loginFormRules" ref="loginFormRef" label-width="80px">
-        <el-form-item label="用户名" prop="username">
+        <el-form-item label="账号" prop="username">
           <el-input
             v-model="loginForm.userAccount"
             placeholder="请输入用户账号"
@@ -67,9 +67,9 @@ const onSubmit = async () => {
     } else if (response.code === 401) {
       errorHandler.showError('账号或密码有误', response)
     } else if (response.code === 405) {
-      errorHandler.showError('账号不存在', response)
-    } else if (response.code === 406) {
       errorHandler.showError('该用户不存在', response)
+    } else if (response.code === 406) {
+      errorHandler.showError('密码错误', response)
     } else if (response.code === 500) {
       errorHandler.showError('系统错误,请重试', response)
     }else{

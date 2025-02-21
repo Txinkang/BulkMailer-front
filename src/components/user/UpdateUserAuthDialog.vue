@@ -11,11 +11,11 @@
         <el-checkbox-group v-model="selectedAuthIds">
           <el-checkbox
             v-for="auth in authForm.all_auth"
-            :key="auth.user_auth_id"
-            :label="auth.user_auth_name"
-            :value="auth.user_auth_id"
+            :key="auth.authId"
+            :label="auth.authName"
+            :value="auth.authId"
           >
-            {{ auth.user_auth_name }}
+            {{ auth.authName }}
           </el-checkbox>
         </el-checkbox-group>
       </el-form-item>
@@ -65,8 +65,8 @@ watch(
     if (visible && props.authForm.user_auth && props.authForm.all_auth) {
       // user_auth 是字符串数组，直接用于比较
       selectedAuthIds.value = props.authForm.all_auth
-        .filter(auth => props.authForm.user_auth.includes(auth.user_auth_id))
-        .map(auth => auth.user_auth_id)
+        .filter(auth => props.authForm.user_auth.includes(auth.authId))
+        .map(auth => auth.authId)
     }
   }
 )
@@ -77,7 +77,7 @@ const updateUserAuth = async () => {
     const requestData = {
       user_id: props.authForm.user_id,
       user_auth_id: selectedAuthIds.value,
-      user_role: Number(userRole.value)
+      user_role: Number(userRole.value) !== 3 && Number(userRole.value) !== 4 ? null : Number(userRole.value)
     }
     console.log("更新用户权限请求数据", requestData);
     const response = await userApi.updateUserAuth(requestData);

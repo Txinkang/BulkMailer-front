@@ -172,7 +172,7 @@
           <!-- 分页 -->
           <SmartPagination
             v-model:current-page="attachmentPagination.currentPage"
-            :server-page-size="searchAttachmentForm.page_size"
+            :server-page-size="attachmentPagination.serverPageSize"
             :display-page-size="attachmentPagination.displayPageSize"
             :total="attachmentPagination.totalItems"
             @load-data="handleAttachmentLoadData"
@@ -348,7 +348,7 @@
           <!-- 分页 -->
           <SmartPagination
             v-model:current-page="imgPagination.currentPage"
-            :server-page-size="searchImgForm.page_size"
+            :server-page-size="imgPagination.serverPageSize"
             :display-page-size="imgPagination.displayPageSize"
             :total="imgPagination.totalItems"
             @load-data="handleImgLoadData"
@@ -467,16 +467,12 @@ const searchAttachmentForm = ref({
   creator_name: null,     // 创建人名称
   belong_user_name: null, // 所属用户
   status: null,           // 状态
-  page_num: 1,         // 页码
-  page_size: 10        // 每页数量
 })
 const searchImgForm = ref({
   img_name: null,  // 图片名称
   creator_name: null,     // 创建人名称
   belong_user_name: null, // 所属用户
   status: null,           // 状态
-  page_num: 1,         // 页码
-  page_size: 30        // 每页数量
 })
 const listDetails = ref([]);
 
@@ -485,12 +481,14 @@ const listDetails = ref([]);
 const assignUserPagination = ref({
   totalItems: 0,
   currentPage: 1,
+  serverPage:1,
   displayPageSize: 5,
+  serverPageSize: 10,
   cachedData: new Map()
 })
 const assignUserCurrentPageData = computed(() => {
   const displayPageSize = assignUserPagination.value.displayPageSize  // 5
-  const serverPageSize = assignSearchQuery.value.page_size  // 10
+  const serverPageSize = assignUserPagination.value.serverPageSize  // 10
   const pagesPerServerPage = serverPageSize / displayPageSize  // 2
 
   // 计算当前服务器页码
@@ -507,14 +505,23 @@ const handleAssignUserLoadData = async (serverPage) => {
     console.log('使用缓存数据，页码：', serverPage)
     return
   }
-  assignSearchQuery.value.page_num = serverPage
+  assignUserPagination.value.serverPage = serverPage
   await searchUsers()
 }
+const clearAssignUserCache = () => {
+  assignUserPagination.value.cachedData.clear()
+  assignUserPagination.value.totalItems = 0
+  assignUserPagination.value.currentPage = 1
+  assignUserPagination.value.serverPage = 1
+}
+
 // 附件
 const attachmentPagination = ref({
   totalItems: 0,
   currentPage: 1,
+  serverPage:1,
   displayPageSize: 10,
+  serverPageSize: 30,
   cachedData: new Map()
 })
 const attachmentCurrentPageData = computed(() => {
@@ -523,7 +530,7 @@ const attachmentCurrentPageData = computed(() => {
    * 然后获取当前请求页的数据，再计算出当前分页组件展示的数据
    */
   const displayPageSize = attachmentPagination.value.displayPageSize  // 10
-  const serverPageSize = searchAttachmentForm.value.page_size  // 30
+  const serverPageSize = attachmentPagination.value.serverPageSize  // 30
   const pagesPerServerPage = serverPageSize / displayPageSize  // 3
 
   // 计算当前服务器页码
@@ -545,20 +552,28 @@ const handleAttachmentLoadData = async (serverPage) => {
     return
   }
   // 没有缓存才发起请求
-  searchAttachmentForm.value.page_num = serverPage
+  attachmentPagination.value.serverPage = serverPage
   await handleAttachmentSearch()
+}
+const clearAttachmentCache = () => {
+  attachmentPagination.value.cachedData.clear()
+  attachmentPagination.value.totalItems = 0
+  attachmentPagination.value.currentPage = 1
+  attachmentPagination.value.serverPage = 1
 }
 
 // 图片
 const imgPagination = ref({
   totalItems: 0,
   currentPage: 1,
+  serverPage:1,
   displayPageSize: 10,
+  serverPageSize: 30,
   cachedData: new Map()
 })
 const imgCurrentPageData = computed(() => {
   const displayPageSize = imgPagination.value.displayPageSize  // 10
-  const serverPageSize = searchImgForm.value.page_size  // 30
+  const serverPageSize = imgPagination.value.serverPageSize  // 30
   const pagesPerServerPage = serverPageSize / displayPageSize  // 3
 
   // 计算当前服务器页码
@@ -580,8 +595,14 @@ const handleImgLoadData = async (serverPage) => {
     return
   }
   // 没有缓存才发起请求
-  searchImgForm.value.page_num = serverPage
+  imgPagination.value.serverPage = serverPage
   await handleImgSearch()
+}
+const clearImgCache = () => {
+  imgPagination.value.cachedData.clear()
+  imgPagination.value.totalItems = 0
+  imgPagination.value.currentPage = 1
+  imgPagination.value.serverPage = 1
 }
 
 
@@ -605,8 +626,6 @@ const assignSearchQuery = ref({
   user_name: null,
   user_account: null,
   user_email: null,
-  page_num: 1,
-  page_size: 10
 });
 const selectedUsers = ref([]);
 const selectedUserIds = ref([]);
@@ -676,15 +695,6 @@ const getAssignmentDetails = (row) => {
   detailsDialogVisible.value = true;
 };
 
-// 清除分配用户缓存
-const clearAssignUserCache = () => {
-  assignUserPagination.value.cachedData.clear()
-  assignUserPagination.value.totalItems = 0
-  assignUserPagination.value.currentPage = 1
-  assignSearchQuery.value.page_num = 1
-  resetSearch()
-}
-
 // 搜索用户
 const searchUsers = async () => {
   try {
@@ -695,11 +705,10 @@ const searchUsers = async () => {
     const response = await fileApi.filterUser(requestData)
     if (response.code === 200) {
       // 更新用户列表数据
-      assignUserPagination.value.cachedData.set(assignSearchQuery.value.page_num, response.data.data)
-      // userList.value = response.data.data
+      assignUserPagination.value.cachedData.set(assignUserPagination.value.serverPage, response.data.data)
       assignUserPagination.value.totalItems = response.data.total_items
       console.log('搜索用户成功，服务器用户数据：', response.data)
-      console.log('搜索用户成功，显示用户列表：', assignUserPagination.value.cachedData.get(assignSearchQuery.value.page_num))
+      console.log('搜索用户成功，显示用户列表：', assignUserPagination.value.cachedData.get(assignUserPagination.value.serverPage))
     }else if(response.code === 415){
       ElMessage.error('未搜索到相关用户')
     }else if(response.code === 411){
@@ -720,13 +729,12 @@ const searchUsers = async () => {
 
 // 重置搜索
 const resetSearch = () => {
+  clearAssignUserCache()
   // 重置表单数据
   assignSearchQuery.value = {
     user_name: '',
     user_account: '',
     user_email: '',
-    page_num: 1,
-    page_size: assignSearchQuery.value.page_size  // 保持每页条数不变
   }
 }
 
@@ -973,23 +981,12 @@ const handleAttachmentDelete = async (attachmentId) => {
     console.log('删除附件请求数据：', requestData)
     const response = await fileApi.deleteAttachment(requestData)
     if (response.code === 200) {
-      // 计算当前服务器页码
-      const displayPageSize = attachmentPagination.value.pageSize
-      const serverPageSize = searchAttachmentForm.value.page_size
-      const pagesPerServerPage = serverPageSize / displayPageSize
-      const serverPage = Math.floor((attachmentPagination.value.currentPage - 1) / pagesPerServerPage) + 1
-
-      // 获取当前服务器页的数据
-      const currentServerData = attachmentPagination.value.cachedData.get(serverPage)
-      if (currentServerData) {
-        // 从缓存数据中删除这条记录
-        const updatedData = currentServerData.filter(item => item.id !== attachmentId)
-        // 更新缓存
-        attachmentPagination.value.cachedData.set(serverPage, updatedData)
-        // 更新总数
-        attachmentPagination.value.totalData--
-      }
-
+      const currentData = attachmentPagination.value.cachedData.get(attachmentPagination.value.serverPage)
+        attachmentPagination.value.cachedData.set(
+        attachmentPagination.value.serverPage,
+        currentData.filter(item => item.id !== attachmentId)
+      )
+      attachmentPagination.value.totalItems = attachmentPagination.value.totalItems - 1
       ElMessage.success('删除成功')
     }else{
       errorHandler.showError('删除附件失败，请重试',response)
@@ -1080,12 +1077,12 @@ const handleAttachmentSearch = async () => {
     const response = await fileApi.filterAttachment(requestData)
     if(response.code === 200){
       attachmentPagination.value.cachedData.set(
-        searchAttachmentForm.value.page_num,
+        attachmentPagination.value.serverPage,
         response.data.data
       )
       console.log('附件搜索结果 response.data.data：', response.data.data)
       attachmentPagination.value.totalItems = response.data.total_items
-      console.log('附件搜索结果 分页数据：', attachmentPagination.value.cachedData.get(searchAttachmentForm.value.page_num))
+      console.log('附件搜索结果 分页数据：', attachmentPagination.value.cachedData.get(attachmentPagination.value.serverPage))
     }else{
       errorHandler.showError('搜索附件失败，请重试',response)
     }
@@ -1094,17 +1091,10 @@ const handleAttachmentSearch = async () => {
   }
 }
 
-// 清除缓存（在需要重新搜索时调用）
-const clearAttachmentCache = () => {
-  attachmentPagination.value.cachedData.clear()
-}
-
 // 搜索按钮点击事件
-const handleAttachmentSearchClick = () => {
+const handleAttachmentSearchClick = async () => {
   clearAttachmentCache() // 清除缓存
-  searchAttachmentForm.value.page_num = 1
-  attachmentPagination.value.currentPage = 1
-  handleAttachmentSearch()
+  await handleAttachmentSearch()
 }
 
 // 重置按钮点击事件
@@ -1115,11 +1105,7 @@ const handleAttachmentReset = () => {
     creator_name: null,
     belong_user_name: null,
     status: null,
-    page_num: 1,
-    page_size: 30
   }
-  attachmentPagination.value.currentPage = 1
-  attachmentPagination.value.totalItems = 0
 }
 
 //-------------图片相关功能-------------
@@ -1287,22 +1273,12 @@ const handleImgDelete = async (imgId) => {
     console.log('删除图片请求数据：', requestData)
     const response = await fileApi.deleteImg(requestData)
     if (response.code === 200) {
-      // 计算当前服务器页码
-      const displayPageSize = imgPagination.value.pageSize
-      const serverPageSize = searchImgForm.value.page_size
-      const pagesPerServerPage = serverPageSize / displayPageSize
-      const serverPage = Math.floor((imgPagination.value.currentPage - 1) / pagesPerServerPage) + 1
-
-      // 获取当前服务器页的数据
-      const currentServerData = imgPagination.value.cachedData.get(serverPage)
-      if (currentServerData) {
-        // 从缓存数据中删除这条记录
-        const updatedData = currentServerData.filter(item => item.id !== imgId)
-        // 更新缓存
-        imgPagination.value.cachedData.set(serverPage, updatedData)
-        // 更新总数
-        imgPagination.value.totalData--
-      }
+      const currentData = imgPagination.value.cachedData.get(imgPagination.value.serverPage)
+        imgPagination.value.cachedData.set(
+        imgPagination.value.serverPage,
+        currentData.filter(item => item.id !== imgId)
+      )
+      imgPagination.value.totalItems = imgPagination.value.totalItems - 1
       ElMessage.success('删除成功')
     }else{
       errorHandler.showError('删除图片失败，请重试',response)
@@ -1391,11 +1367,11 @@ const handleImgSearch = async () => {
     const response = await fileApi.filterImg(requestData)
     if(response.code === 200){
       imgPagination.value.cachedData.set(
-        searchImgForm.value.page_num,
+        imgPagination.value.serverPage,
         response.data.data
       )
       imgPagination.value.totalItems = response.data.total_items
-      console.log('图片搜索结果：', imgPagination.value.cachedData.get(searchImgForm.value.page_num))
+      console.log('图片搜索结果：', imgPagination.value.cachedData.get(imgPagination.value.serverPage))
     }else{
       errorHandler.showError('搜索图片失败，请重试。请检查各项参数是否正常',response)
     }
@@ -1404,17 +1380,10 @@ const handleImgSearch = async () => {
   }
 }
 
-// 清除缓存（在需要重新搜索时调用）
-const clearImgCache = () => {
-  imgPagination.value.cachedData.clear()
-}
-
 // 图片搜索按钮点击事件
-const handleImgSearchClick = () => {
+const handleImgSearchClick = async () => {
   clearImgCache()
-  searchImgForm.value.page_num = 1
-  imgPagination.value.currentPage = 1
-  handleImgSearch()
+  await handleImgSearch()
 }
 
 // 图片重置
@@ -1425,11 +1394,7 @@ const handleImgReset = () => {
     creator_name: null,
     belong_user_name: null,
     status: null,
-    page_num: 1,
-    page_size: searchImgForm.value.page_size
   }
-  imgPagination.value.currentPage = 1
-  imgPagination.value.totalItems = 0
 }
 
 

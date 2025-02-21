@@ -1,23 +1,22 @@
 import {createRouter, createWebHistory} from "vue-router";
 import MainLayout from "@/Layout/MainLayout.vue";
-import EmailHistory from "@/views/EmailHistory/EmailHistory.vue";
+import EmailHistory from "@/views/EmailManage/EmailHistory.vue";
 import FileManage from "@/views/FileManage/FileManage.vue";
-import CompanyManage from "@/views/CompanyManage/CompanyManage.vue";
-import SectorManage from "@/views/SectorManage/SectorManage.vue";
 import UserManage from "@/views/UserManage/UserManage.vue";
-import CommodityManage from "@/views/CommodityManage/CommodityManage.vue";
-import SupplierManage from "@/views/SupplierManage/SupplierManage.vue";
-import CustomerManage from "@/views/CustomerManage/CustomerManage.vue";
-import JobManage from "@/views/JobManage/JobManage.vue";
-import CountryManage from "@/views/CountryManage/CountryManage.vue";
-import AreaManage from "@/views/AreaManage/AreaManage.vue";
-import TemplateManage from "@/views/TemplateManage/TemplateManage.vue";
+import CommodityManage from "@/views/Dictionary/CommodityManage.vue";
+import SupplierManage from "@/views/ReceiverManage/SupplierManage.vue";
+import CustomerManage from "@/views/ReceiverManage/CustomerManage.vue";
+import CountryManage from "@/views/Dictionary/CountryManage.vue";
+import AreaManage from "@/views/Dictionary/AreaManage.vue";
+import TemplateManage from "@/views/EmailManage/TemplateManage.vue";
 import ServerConfig from "@/views/ServerConfig/ServerConfig.vue";
-import EmailType from "@/views/EmailType/EmailType.vue";
+import EmailType from "@/views/Dictionary/EmailType.vue";
 import TotalReport from "@/views/ReportManage/TotalReport/TotalReport.vue";
 import SingleReport from "@/views/ReportManage/SingleReport/SingleReport.vue";
-import EmailTask from "@/views/EmailTaskManage/EmailTask.vue";
+import EmailTask from "@/views/EmailManage/EmailTask.vue";
 import Login from "@/views/Login/Login.vue";
+import SendEmail from "@/views/SendManage/SendEmail.vue";
+import CircleSend from "@/views/SendManage/CircleSend.vue";
 
 const routes = [
   {
@@ -33,23 +32,31 @@ const routes = [
     component: MainLayout,
     redirect: "/fileManage", // 默认重定向到 fileManage
     children: [
-      {path: "/templateManage", name: "TemplateManage", component: TemplateManage},
+      // 发送管理
+      {path:"/sendEmail", name: "SendEmail", component: SendEmail},
+      {path:"/circleSend", name: "CircleSend", component: CircleSend},
+      // 文件管理
       {path: "/fileManage", name: "FileManage", component: FileManage},
+      // 邮件管理
+      {path: "/templateManage", name: "TemplateManage", component: TemplateManage},
       {path: "/emailHistory", name: "EmailHistory", component: EmailHistory},
       {path: "/emailTask", name: "EmailTask", component: EmailTask},
-      {path: "/companyManage", name: "CompanyManage", component: CompanyManage},
-      {path: "/sectorManage", name: "SectorManage", component: SectorManage},
-      {path: "/jobManage", name: "JobManage", component: JobManage},
-      {path: "/userManage", name: "UserManage", component: UserManage},
-      {path: "/commodityManage", name: "CommodityManage", component: CommodityManage},
-      {path: "/supplierManage", name: "SupplierManage", component: SupplierManage},
-      {path: "/customerManage", name: "CustomerManage", component: CustomerManage},
-      {path: "/countryManage", name: "CountryManage", component: CountryManage},
-      {path: "/areaManage", name: "AreaManage", component: AreaManage},
-      {path: "/serverConfig", name: "ServerConfig", component: ServerConfig},
-      {path: "/emailType", name: "EmailType", component: EmailType},
+      // 报表管理
       {path: "/totalReport", name: "TotalReport", component: TotalReport},
       {path: "/singleReport", name: "SingleReport", component: SingleReport},
+      // 用户管理
+      {path: "/userManage", name: "UserManage", component: UserManage},
+      // 收件人管理
+      {path: "/supplierManage", name: "SupplierManage", component: SupplierManage},
+      {path: "/customerManage", name: "CustomerManage", component: CustomerManage},
+      // 字典管理
+      {path: "/commodityManage", name: "CommodityManage", component: CommodityManage},
+      {path: "/countryManage", name: "CountryManage", component: CountryManage},
+      {path: "/areaManage", name: "AreaManage", component: AreaManage},
+      {path: "/emailType", name: "EmailType", component: EmailType},
+      // 服务器配置
+      {path: "/serverConfig", name: "ServerConfig", component: ServerConfig},
+
     ],
 
   },

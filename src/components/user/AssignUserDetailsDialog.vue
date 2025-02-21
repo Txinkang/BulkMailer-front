@@ -51,9 +51,9 @@ const dialogVisible = ref(props.modelValue)
 const assignDetailsPagination = ref({
   currentPage: 1,
   serverPage: 1,
-  totalItems: 0,
-  serverPageSize: 10,
   displayPageSize: 5,
+  serverPageSize: 15,
+  totalItems: 0,
   cachedData: new Map()
 })
 
@@ -107,8 +107,8 @@ const getAssignDetails = async () => {
       clearCache()
       errorHandler.showError('获取用户分配详情失败，请重试',response)
     }else{
-      assignDetailsPagination.value.cachedData.set(assignDetailsPagination.value.serverPage, response.data.assign_process)
-      assignDetailsPagination.value.totalItems = response.data.total_items
+      assignDetailsPagination.value.cachedData.set(assignDetailsPagination.value.serverPage, response.data.assignProcess)
+      assignDetailsPagination.value.totalItems = response.data.totalItems
       console.log('用户分配详情响应数据：', response)
     }
   } catch (error) {
