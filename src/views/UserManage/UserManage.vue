@@ -27,22 +27,12 @@
               </el-input>
             </el-form-item>
             <el-form-item>
-              <el-input v-model="searchUserForm.belong_user_name" placeholder="请搜索所属用户名称" clearable style="width:200px">
-              </el-input>
-            </el-form-item>
-            <el-form-item>
               <el-input v-model="searchUserForm.user_account" placeholder="请搜索登录账号" clearable style="width:200px">
               </el-input>
             </el-form-item>
             <el-form-item>
               <el-input v-model="searchUserForm.user_email" placeholder="请搜索邮箱" clearable style="width:200px">
               </el-input>
-            </el-form-item>
-            <el-form-item>
-              <el-select v-model="searchUserForm.status" style="width:200px" placeholder="分配状态" clearable>
-                <el-option label="未分配" value=1></el-option>
-                <el-option label="已分配" value=2></el-option>
-              </el-select>
             </el-form-item>
             <el-form-item>
               <el-button type="primary" @click="handleSearchUserClick">搜索</el-button>
@@ -60,12 +50,6 @@
                 <span>{{ row.userName }}</span>
               </template>
             </el-table-column>
-            <!-- 所属用户列 -->
-            <el-table-column label="所属用户" align="left" min-width="100">
-              <template #default="{ row }">
-                <span>{{ row.belongUserName }}</span>
-              </template>
-            </el-table-column>
             <!-- 登录账号列 -->
             <el-table-column label="登录账号" align="left" min-width="100">
               <template #default="{ row }">
@@ -73,24 +57,9 @@
               </template>
             </el-table-column>
             <!-- 邮箱列 -->
-            <el-table-column label="邮箱" align="left" min-width="100">
+            <el-table-column label="邮箱" align="left" min-width="150">
               <template #default="{ row }">
                 <span>{{ row.userEmail }}</span>
-              </template>
-            </el-table-column>
-            <!-- 状态列 -->
-            <el-table-column label="状态" min-width="150">
-              <template #default="{ row }">
-                <span class="status-text" @click="row.status === userStatus.USER_STATUS_ASSIGNED && openAssignUserDetails(row)">
-                  {{ row.status === userStatus.USER_STATUS_ASSIGNED ? '已分配' : '未分配' }}
-                </span>
-                <el-button
-                  size="small"
-                  type="primary"
-                  @click="openReassignUserDialog(row)"
-                >
-                  {{ row.status === userStatus.USER_STATUS_ASSIGNED ? '重新分配' : '去分配' }}
-                </el-button>
               </template>
             </el-table-column>
 
@@ -99,8 +68,6 @@
               <template #default="{ row }">
                 <el-button type="primary" size="small" @click="openCheckUserPasswordDialog(row)">查看</el-button>
                 <el-button type="warning" size="small" @click="openUpdateUserDialog(row)">修改</el-button>
-                <el-button type="warning" size="small" @click="openUpdateUserAuthDialog(row)">权限</el-button>
-                <el-button type="danger" size="small" @click="deleteUser(row)">删除</el-button>
               </template>
             </el-table-column>
           </el-table>

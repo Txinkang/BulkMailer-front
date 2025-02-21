@@ -5,7 +5,7 @@
       <div class="header-left">
         <div>{{title}}</div>
         <div>邮件群发助手</div>
-        <div>管理端</div>
+        <div>客户端</div>
       </div>
       <div class="header-right">
         <div>用户：{{ username }}</div>
@@ -24,61 +24,61 @@
           class="menu-scrollable"
         >
           <!-- 发送管理 -->
-          <el-menu-item class="menu-item" index="/sendEmail">手动发送</el-menu-item>
-          <el-menu-item class="menu-item" index="/circleSend">循环发送</el-menu-item>
+          <el-menu-item class="menu-item" index="/sendEmail" v-if="hasPermission(1)">手动发送</el-menu-item>
+          <el-menu-item class="menu-item" index="/circleSend" v-if="hasPermission(2)">循环发送</el-menu-item>
 
           <!-- 文件管理 -->
-          <el-menu-item  class="menu-item" index="/fileManage">文件管理</el-menu-item>
+          <el-menu-item class="menu-item" index="/fileManage" v-if="hasPermission(3)">文件管理</el-menu-item>
 
           <!-- 邮件管理 -->
-          <el-sub-menu index="email-management">
+          <el-sub-menu index="email-management" v-if="hasPermission(4) || hasPermission(5) || hasPermission(6)">
             <template #title>
               <span>邮件管理</span>
             </template>
-            <el-menu-item class="menu-item" index="/emailTask">邮件任务管理</el-menu-item>
-            <el-menu-item class="menu-item" index="/emailHistory">历史记录管理</el-menu-item>
-            <el-menu-item class="menu-item" index="/templateManage">邮件模版管理</el-menu-item>
+            <el-menu-item class="menu-item" index="/emailTask" v-if="hasPermission(4)">邮件任务管理</el-menu-item>
+            <el-menu-item class="menu-item" index="/emailHistory" v-if="hasPermission(5)">历史记录管理</el-menu-item>
+            <el-menu-item class="menu-item" index="/templateManage" v-if="hasPermission(6)" >邮件模版管理</el-menu-item>
           </el-sub-menu>
 
           <!-- 报表管理 -->
-          <el-sub-menu index="report-management">
+          <el-sub-menu index="report-management" v-if="hasPermission(7) || hasPermission(8)">
             <template #title>
               <span>报表管理</span>
             </template>
-            <el-menu-item class="menu-item" index="/totalReport">综合报表</el-menu-item>
-            <el-menu-item class="menu-item" index="/singleReport">任务报表</el-menu-item>
+            <el-menu-item class="menu-item" index="/totalReport" v-if="hasPermission(7)">综合报表</el-menu-item>
+            <el-menu-item class="menu-item" index="/singleReport" v-if="hasPermission(8)">任务报表</el-menu-item>
           </el-sub-menu>
 
           <!-- 发件方管理 -->
-          <el-sub-menu index="sender-management">
+          <el-sub-menu index="sender-management" v-if="hasPermission(9)">
             <template #title>
               <span>发件方管理</span>
             </template>
-            <el-menu-item class="menu-item" index="/userManage">用户管理</el-menu-item>
+            <el-menu-item class="menu-item" index="/userManage" v-if="hasPermission(9)">用户管理</el-menu-item>
           </el-sub-menu>
 
           <!-- 收件方管理 -->
-          <el-sub-menu index="receiver-management">
+          <el-sub-menu index="receiver-management" v-if="hasPermission(10) || hasPermission(11)">
             <template #title>
               <span>收件方管理</span>
             </template>
-              <el-menu-item class="menu-item" index="/supplierManage">供应商管理</el-menu-item>
-              <el-menu-item class="menu-item" index="/customerManage">客户管理</el-menu-item>
+            <el-menu-item class="menu-item" index="/supplierManage" v-if="hasPermission(10)">供应商管理</el-menu-item>
+            <el-menu-item class="menu-item" index="/customerManage" v-if="hasPermission(11)">客户管理</el-menu-item>
           </el-sub-menu>
 
           <!-- 字典管理 -->
-          <el-sub-menu index="dictionary-management">
+          <el-sub-menu index="dictionary-management" v-if="hasPermission(12) || hasPermission(13) || hasPermission(14) || hasPermission(15)">
             <template #title>
               <span>字典管理</span>
             </template>
-            <el-menu-item class="menu-item" index="/emailType">邮件类型管理</el-menu-item>
-            <el-menu-item class="menu-item" index="/commodityManage">商品管理</el-menu-item>
-            <el-menu-item class="menu-item" index="/countryManage">国家管理</el-menu-item>
-            <el-menu-item class="menu-item" index="/areaManage">区域管理</el-menu-item>
+            <el-menu-item class="menu-item" index="/emailType" v-if="hasPermission(12)">邮件类型管理</el-menu-item>
+            <el-menu-item class="menu-item" index="/commodityManage" v-if="hasPermission(13)">商品管理</el-menu-item>
+            <el-menu-item class="menu-item" index="/countryManage" v-if="hasPermission(14)">国家管理</el-menu-item>
+            <el-menu-item class="menu-item" index="/areaManage" v-if="hasPermission(15)">区域管理</el-menu-item>
           </el-sub-menu>
 
           <!-- 服务器配置 -->
-          <el-menu-item class="menu-item" index="/serverConfig">邮件服务器管理</el-menu-item>
+          <el-menu-item class="menu-item" index="/serverConfig" v-if="hasPermission(16)">邮件服务器管理</el-menu-item>
 
         </el-menu>
 
@@ -158,6 +158,12 @@ function handleLogout() {
 
 function handleMenuSelect(index) {
   router.push(index);
+}
+
+// 添加权限检查方法
+function hasPermission(authId) {
+  const userAuth = JSON.parse(localStorage.getItem('user_auth') || '[]')
+  return userAuth.some(auth => auth.user_auth_id === authId.toString())
 }
 </script>
 

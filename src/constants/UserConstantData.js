@@ -1,5 +1,5 @@
 const UserConstantData = {
-  userRole: 2,
+  userRole: 4,
   getUserName: () => localStorage.getItem('user_name') || '',
   title: '易架构',
   companyName: '公司',

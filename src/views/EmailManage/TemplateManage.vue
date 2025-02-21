@@ -11,15 +11,16 @@
                 <el-input v-model="searchTemplateForm.template_name" placeholder="请搜索模板名称" style="width: 200px;" clearable>
                 </el-input>
               </el-form-item>
-              <!-- 创建人名称 -->
-              <el-form-item >
-                <el-input v-model="searchTemplateForm.creator_name" style="width: 200px;" placeholder="请搜索创建人名称" clearable>
-                </el-input>
-              </el-form-item>
-              <!-- 所属用户  -->
-              <el-form-item >
-                <el-input v-model="searchTemplateForm.belong_user_name" style="width: 200px;" placeholder="请搜索所属用户名称" clearable>
-                </el-input>
+
+              <el-form-item>
+                <el-select
+                  v-model="searchTemplateForm.belong_user_name"
+                  style="width: 200px;"
+                  placeholder="请选择所属用户"
+                  clearable
+                >
+                  <el-option v-for="user in templateBelongUserList" :key="user.id" :label="user.name" :value="user.value" />
+                </el-select>
               </el-form-item>
 
               <!-- 类型  -->
@@ -38,14 +39,6 @@
                   :key="templateType.email_type_id"
                   :label="templateType.email_type_name"
                   :value="templateType.email_type_id" />
-                </el-select>
-              </el-form-item>
-
-              <!-- 分配状态  -->
-              <el-form-item >
-                <el-select v-model="searchTemplateForm.status" style="width: 200px;" placeholder="请选择分配状态" clearable>
-                  <el-option label="未分配" value="1"/>
-                  <el-option label="已分配" value="2"/>
                 </el-select>
               </el-form-item>
 
@@ -74,39 +67,10 @@
                 </template>
               </el-table-column>
 
-              <!-- 所属用户列 -->
-              <el-table-column label="所属用户" min-width="100">
-                <template #default="{ row }">
-                  <span>共 {{ row.belong_user_name.length }} 个用户</span>
-                  <el-button
-                    size="mini"
-                    type="text"
-                    @click="openBelongUserListDialog(row, 'belong_user_name')">
-                    查看
-                  </el-button>
-                </template>
-              </el-table-column>
-
               <!-- 模板类型列 -->
               <el-table-column label="模板类型" align="left" min-width="100">
                 <template #default="{ row }">
                   <span>{{ row.template_type_name }}</span>
-                </template>
-              </el-table-column>
-
-              <!-- 状态列 -->
-              <el-table-column label="状态" min-width="150">
-                <template #default="{ row }">
-                <span class="status-text" @click="row.status === StatusConstantData.TEMPLATE_STATUS_ASSIGNED && openAssignmentDetails(row)">
-                  {{ row.status === StatusConstantData.TEMPLATE_STATUS_ASSIGNED ? '已分配' : '未分配' }}
-                </span>
-                  <el-button
-                    size="small"
-                    type="primary"
-                    @click="openReassignTemplateDialog(row)"
-                  >
-                    {{ row.status === StatusConstantData.TEMPLATE_STATUS_ASSIGNED ? '重新分配' : '去分配' }}
-                  </el-button>
                 </template>
               </el-table-column>
 
@@ -271,7 +235,7 @@ import { errorHandler } from "@/utils/errorHandler";
 import { debounce } from "lodash";
 import { ElMessage } from "element-plus";
 import SmartPagination from "@/components/SmartPagination.vue";
-import StatusConstantData from "@/constants/StatusConstantData.js";
+import UserConstantData from "@/constants/UserConstantData.js";
 import ListDialog from "@/components/ListDialog.vue";
 import AssignFileDetailsDialog from "@/components/file/AssignFileDetailsDialog.vue";
 import AssignTemplateDialog from "@/components/template/AssignTemplateDialog.vue";
@@ -287,6 +251,7 @@ const searchTemplateForm = ref({
   creator_name: "",
   belong_user_name: "",
 });
+const templateBelongUserList = ref([{id:1,name:'无',value:''},{id:2,name:'公司',value:UserConstantData.companyName},{id:3,name:'个人',value:localStorage.getItem('user_name')}]);
 const assignTemplateForm = ref({
   active_tab: "template",
   selected_template_id: "",
@@ -550,6 +515,7 @@ const openSaveTemplateDialog = () => {
 };
 
 const openUpdateDialog = (row) => {
+  console.log("打开修改模板对话框", row);
   updateTemplateForm.value.template_id = row.id;
   updateTemplateForm.value.template_type_id = row.template_type_id;
   updateTemplateForm.value.template_name = row.name;

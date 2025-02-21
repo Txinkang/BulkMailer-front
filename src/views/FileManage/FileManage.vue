@@ -64,32 +64,13 @@
               </el-form-item>
 
               <el-form-item>
-                <el-input
-                  v-model="searchAttachmentForm.creator_name"
-                  style="width: 200px;"
-                  placeholder="请搜索创建人名称"
-                  clearable
-                />
-              </el-form-item>
-
-              <el-form-item>
-                <el-input
+                <el-select
                   v-model="searchAttachmentForm.belong_user_name"
                   style="width: 200px;"
-                  placeholder="请搜索所属用户"
+                  placeholder="请选择所属用户"
                   clearable
-                />
-              </el-form-item>
-
-              <el-form-item>
-                <el-select
-                  v-model="searchAttachmentForm.status"
-                  style="width: 200px;"
-                  placeholder="请选择状态"
                 >
-                  <el-option value=0 label="无" />
-                  <el-option value=1 label="未分配" />
-                  <el-option value=2 label="已分配" />
+                  <el-option v-for="user in attachmentBelongUserList" :key="user.id" :label="user.name" :value="user.value" />
                 </el-select>
               </el-form-item>
 
@@ -116,35 +97,6 @@
               <el-table-column label="创建人" align="left" min-width="100">
                 <template #default="{ row }">
                   <span>{{ row.creator_name }}</span>
-                </template>
-              </el-table-column>
-
-              <!-- 所属用户列 -->
-              <el-table-column label="所属用户" min-width="100">
-                <template #default="{ row }">
-                  <span>共 {{ row.belong_user_name.length }} 个用户</span>
-                  <el-button
-                    size="mini"
-                    type="text"
-                    @click="openBelongUserListDialog(row, 'belong_user_name')">
-                    查看
-                  </el-button>
-                </template>
-              </el-table-column>
-
-              <!-- 状态列 -->
-              <el-table-column label="状态" min-width="150">
-                <template #default="{ row }">
-                <span class="status-text" @click="row.status === attachmentStatus.assigned && getAssignmentDetails(row)">
-                  {{ row.status === attachmentStatus.assigned ? "已分配" : "未分配" }}
-                </span>
-                  <el-button
-                    size="small"
-                    type="primary"
-                    @click="openReassignDialog(row)"
-                  >
-                    {{ row.status === attachmentStatus.assigned ? '重新分配' : '去分配' }}
-                  </el-button>
                 </template>
               </el-table-column>
 
@@ -240,32 +192,13 @@
               </el-form-item>
 
               <el-form-item>
-                <el-input
-                  v-model="searchImgForm.creator_name"
-                  style="width: 200px;"
-                  placeholder="请搜索创建人名称"
-                  clearable
-                />
-              </el-form-item>
-
-              <el-form-item>
-                <el-input
+                <el-select
                   v-model="searchImgForm.belong_user_name"
                   style="width: 200px;"
-                  placeholder="请搜索所属用户"
+                  placeholder="请选择所属用户"
                   clearable
-                />
-              </el-form-item>
-
-              <el-form-item>
-                <el-select
-                  v-model="searchImgForm.status"
-                  style="width: 200px;"
-                  placeholder="请选择状态"
                 >
-                  <el-option value=0 label="无" />
-                  <el-option value=1 label="未分配" />
-                  <el-option value=2 label="已分配" />
+                  <el-option v-for="user in imgBelongUserList" :key="user.id" :label="user.name" :value="user.value" />
                 </el-select>
               </el-form-item>
 
@@ -292,35 +225,6 @@
               <el-table-column label="创建人" align="left" min-width="100">
                 <template #default="{ row }">
                   <span>{{ row.creator_name }}</span>
-                </template>
-              </el-table-column>
-
-              <!-- 所属用户列 -->
-              <el-table-column label="所属用户" min-width="100">
-                <template #default="{ row }">
-                  <span>共 {{ row.belong_user_name.length }} 个用户</span>
-                  <el-button
-                    size="mini"
-                    type="text"
-                    @click="openBelongUserListDialog(row, 'belong_user_name')">
-                    查看
-                  </el-button>
-                </template>
-              </el-table-column>
-
-              <!-- 状态列 -->
-              <el-table-column label="状态" min-width="150">
-                <template #default="{ row }">
-                <span class="status-text" @click="row.status === imgStatus.assigned && getAssignmentDetails(row)">
-                  {{ row.status === imgStatus.assigned ? "已分配" : "未分配" }}
-                </span>
-                  <el-button
-                    size="small"
-                    type="primary"
-                    @click="openReassignDialog(row)"
-                  >
-                    {{ row.status === imgStatus.assigned ? '重新分配' : '去分配' }}
-                  </el-button>
                 </template>
               </el-table-column>
 
@@ -464,16 +368,16 @@ const attachments = ref([]);
 const imgs = ref([]);
 const searchAttachmentForm = ref({
   attachment_name: null,  // 附件名称
-  creator_name: null,     // 创建人名称
   belong_user_name: null, // 所属用户
   status: null,           // 状态
 })
 const searchImgForm = ref({
   img_name: null,  // 图片名称
-  creator_name: null,     // 创建人名称
   belong_user_name: null, // 所属用户
   status: null,           // 状态
 })
+const attachmentBelongUserList = ref([{id:1,name:'无',value:''},{id:2,name:'公司',value:UserConstantData.companyName},{id:3,name:'个人',value:localStorage.getItem('user_name')}]);
+const imgBelongUserList = ref([{id:1,name:'无',value:''},{id:2,name:'公司',value:UserConstantData.companyName},{id:3,name:'个人',value:localStorage.getItem('user_name')}]);
 const listDetails = ref([]);
 
 // =====================分页====================
@@ -607,14 +511,6 @@ const clearImgCache = () => {
 
 
 // 分配管理数据
-const attachmentStatus = ref({
-  unassigned: statusData.ATTACHMENT_STATUS_UNASSIGNED,
-  assigned: statusData.ATTACHMENT_STATUS_ASSIGNED
-})
-const imgStatus = ref({
-  unassigned: statusData.IMG_STATUS_UNASSIGNED,
-  assigned: statusData.IMG_STATUS_ASSIGNED
-})
 const assignUser = ref({
   companyName: UserConstantData.companyName,
   companyId: UserConstantData.companyId,
@@ -632,130 +528,6 @@ const selectedUserIds = ref([]);
 const selectedFileCreatorName = ref('');
 const selectedFileId = ref('');
 
-
-
-//======================分配管理======================
-// 确定分配
-const handleAssign = async () => {
-  try{
-    if(activeTab.value === tabName.value.attachmentName){
-      if(assignType.value === assignUser.value.companyName){
-        selectedUserIds.value = [assignUser.value.companyId]
-      }
-      console.log('已选择附件id：', selectedFileIds.value)
-      console.log('已选择用户id：', selectedUserIds.value)
-      const requestData = {
-        attachment_id: selectedFileIds.value,
-        belong_user_id: selectedUserIds.value
-      }
-      const response = await fileApi.assignAttachment(requestData)
-      if(response.code !== 200){
-        errorHandler.showError('分配失败，请重试',response)
-      }else{
-        ElMessage.success('分配成功')
-        handleCancelAssign();
-      }
-    }else if(activeTab.value === tabName.value.imgName){
-      if(assignType.value === assignUser.value.companyName){
-        selectedUserIds.value = [assignUser.value.companyId]
-      }
-      console.log('已选择图片id：', selectedFileIds.value)
-      console.log('已选择用户id：', selectedUserIds.value)
-      const requestData = {
-        img_id: selectedFileIds.value,
-        belong_user_id: selectedUserIds.value
-      }
-      const response = await fileApi.assignImg(requestData)
-      if(response.code !== 200){
-        errorHandler.showError('分配失败，请重试',response)
-      }else{
-        ElMessage.success('分配成功')
-        handleCancelAssign();
-      }
-    }
-  }catch(error){
-    errorHandler.showError('分配失败，请重试',error)
-  }
-}
-
-// 取消分配
-const handleCancelAssign = () => {
-  assignDialogVisible.value = false;
-  selectedFileIds.value = null;
-  selectedUserIds.value = [];
-  selectedUsers.value = [];
-  assignType.value = assignUser.value.companyName;
-  clearAssignUserCache()
-}
-
-// 获取分配详情
-const getAssignmentDetails = (row) => {
-  selectedFileCreatorName.value = row.creator_name;
-  selectedFileId.value = row.id;
-  detailsDialogVisible.value = true;
-};
-
-// 搜索用户
-const searchUsers = async () => {
-  try {
-    const requestData = {
-      ...assignSearchQuery.value,
-    }
-    console.log('搜索用户请求数据：', requestData)
-    const response = await fileApi.filterUser(requestData)
-    if (response.code === 200) {
-      // 更新用户列表数据
-      assignUserPagination.value.cachedData.set(assignUserPagination.value.serverPage, response.data.data)
-      assignUserPagination.value.totalItems = response.data.total_items
-      console.log('搜索用户成功，服务器用户数据：', response.data)
-      console.log('搜索用户成功，显示用户列表：', assignUserPagination.value.cachedData.get(assignUserPagination.value.serverPage))
-    }else if(response.code === 415){
-      ElMessage.error('未搜索到相关用户')
-    }else if(response.code === 411){
-      errorHandler.showError('您暂无分配用户的权限',response)
-    }else if(response.code === 412){
-      errorHandler.showError('选中的附件不存在，或已被删除',response)
-    }else if(response.code === 413){
-      errorHandler.showError('已选择用户中，有不属于您管理的用户',response)
-    }else if(response.code === 423){
-      errorHandler.showError('已选择用户中，有不存在的用户，或许已被删除',response)
-    }else{
-      errorHandler.showError('搜索用户失败，请重试',response)
-    }
-  } catch (error) {
-    errorHandler.showError('搜索用户失败，请重试',error)
-  }
-}
-
-// 重置搜索
-const resetSearch = () => {
-  clearAssignUserCache()
-  // 重置表单数据
-  assignSearchQuery.value = {
-    user_name: '',
-    user_account: '',
-    user_email: '',
-  }
-}
-
-// 处理用户选择
-const handleUserSelect = (checked, user) => {
-  if (checked && !selectedUsers.value.find(u => u.id === user.id)) {
-    selectedUsers.value.push(user)
-    if (!selectedUserIds.value.includes(user.id)) {
-      selectedUserIds.value.push(user.id)
-    }
-  } else if (!checked) {
-    selectedUsers.value = selectedUsers.value.filter(u => u.id !== user.id)
-    selectedUserIds.value = selectedUserIds.value.filter(id => id !== user.id)
-  }
-}
-
-// 处理用户移除
-const handleUserRemove = (user) => {
-  selectedUsers.value = selectedUsers.value.filter(u => u.id !== user.id)
-  selectedUserIds.value = selectedUserIds.value.filter(id => id !== user.id)
-}
 
 //======================上传、下载文件======================
 // 配置上传路径
@@ -1069,8 +841,8 @@ const handleAttachmentSearch = async () => {
       creator_name: searchAttachmentForm.value.creator_name === null ? '' : searchAttachmentForm.value.creator_name,
       belong_user_name: searchAttachmentForm.value.belong_user_name === null ? '' : searchAttachmentForm.value.belong_user_name,
       status: searchAttachmentForm.value.status === null ? 0 : Number(searchAttachmentForm.value.status),
-      page_num: searchAttachmentForm.value.page_num === null ? 1 : Number(searchAttachmentForm.value.page_num),
-      page_size: searchAttachmentForm.value.page_size === null ? 30 : Number(searchAttachmentForm.value.page_size)
+      page_num: attachmentPagination.value.serverPage === null ? 1 : Number(attachmentPagination.value.serverPage),
+      page_size: attachmentPagination.value.serverPageSize === null ? 30 : Number(attachmentPagination.value.serverPageSize)
     }
     console.log('附件搜索请求参数：', requestData)
 
@@ -1360,8 +1132,8 @@ const handleImgSearch = async () => {
       creator_name: searchImgForm.value.creator_name === null ? '' : searchImgForm.value.creator_name,
       belong_user_name: searchImgForm.value.belong_user_name === null ? '' : searchImgForm.value.belong_user_name,
       status: searchImgForm.value.status === null ? 0 : Number(searchImgForm.value.status),
-      page_num: searchImgForm.value.page_num === null ? 1 : Number(searchImgForm.value.page_num),
-      page_size: searchImgForm.value.page_size === null ? 20 : Number(searchImgForm.value.page_size)
+      page_num: imgPagination.value.serverPage === null ? 1 : Number(imgPagination.value.serverPage),
+      page_size: imgPagination.value.serverPageSize === null ? 20 : Number(imgPagination.value.serverPageSize)
     }
     console.log('图片搜索请求参数：', requestData)
     const response = await fileApi.filterImg(requestData)

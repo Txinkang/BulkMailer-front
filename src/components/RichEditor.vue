@@ -356,8 +356,8 @@ const searchImages = async () => {
   try {
     const requestData = {
       img_name: imageSearchText.value,
-      creator_name: userSearchText.value,
-      belong_user_name: '',
+      creator_name: '',
+      belong_user_name: userSearchText.value,
       status: 0,
       page_num: 1,
       page_size: 20

@@ -1,5 +1,5 @@
 import request from '../request'
-
+import {testApi} from '../request'
 export const emailTypeApi = {
   // 创建邮件类型
   createEmailType(data) {
@@ -16,7 +16,7 @@ export const emailTypeApi = {
 
   // 搜索邮件类型
   filterEmailType(data) {
-    return request({
+    return testApi({
       url: '/dictionary/filterEmailType',
       method: 'post',
       headers: {
