@@ -70,7 +70,7 @@
             <el-form-item>
               <el-select
                 v-model="searchCustomerForm.acceptEmailTypeId"
-                placeholder="可接受邮件类型(可多选)"
+                placeholder="不接受邮件类型(可多选)"
                 filterable
                 remote
                 multiple
@@ -224,13 +224,13 @@
                 </template>
               </el-table-column>
               <!-- 接受邮件类型列 -->
-              <el-table-column label="接受邮件类型列表" min-width="200">
+              <el-table-column label="不接受邮件类型列表" min-width="200">
                 <template #default="{ row }">
-                  <span>共 {{ row.accept_email_type_name.length }} 个邮箱类型</span>
+                  <span>共 {{ row.no_accept_email_type_name.length }} 个邮箱类型</span>
                   <el-button
                     size="mini"
                     type="text"
-                    @click="checkEmailTypeList(row, 'accept_email_type_name')">
+                    @click="checkEmailTypeList(row, 'no_accept_email_type_name')">
                     查看
                   </el-button>
                 </template>

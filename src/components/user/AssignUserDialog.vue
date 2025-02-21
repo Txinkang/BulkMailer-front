@@ -74,8 +74,8 @@ const selectedAdmin = ref(null)
 const searchUserPagination = ref({
   currentPage: 1,
   serverPage: 1,
-  displayPageSize: 5,
-  serverPageSize: 10,
+  displayPageSize:5,
+  serverPageSize: 20,
   totalItems: 0,
   cachedData: new Map()
 });
@@ -149,7 +149,7 @@ const searchUsers = async () => {
       page_size: searchUserPagination.value.serverPageSize
     }
     console.log('搜索用户请求数据：', requestData)
-    const response = await fileApi.filterUser(requestData)
+    const response = await fileApi.filterAdmin(requestData)
     if(response.code === 200){
       searchUserPagination.value.cachedData.set(searchUserPagination.value.serverPage, response.data.data)
       searchUserPagination.value.totalItems = response.data.total_items

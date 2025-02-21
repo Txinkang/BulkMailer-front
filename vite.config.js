@@ -17,14 +17,14 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://112.35.176.43:9900',
-        //target: 'http://localhost:8080',
+        //target: 'http://112.35.176.43:9900',
+        target: 'http://localhost:8080',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
       '/testApi': {
         //target: 'http://112.35.176.43:9900',
-        target: 'http://localhost:8888',
+        target: 'http://localhost:8080',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/testApi/, ''),
       },

@@ -73,7 +73,7 @@
               </template>
             </el-table-column>
             <!-- 邮箱列 -->
-            <el-table-column label="邮箱" align="left" min-width="100">
+            <el-table-column label="邮箱" align="left" min-width="150">
               <template #default="{ row }">
                 <span>{{ row.userEmail }}</span>
               </template>
@@ -95,7 +95,7 @@
             </el-table-column>
 
             <!-- 查看按钮列 -->
-            <el-table-column label="操作" align="center" min-width="200">
+            <el-table-column label="操作" align="center" min-width="220">
               <template #default="{ row }">
                 <el-button type="primary" size="small" @click="openCheckUserPasswordDialog(row)">查看</el-button>
                 <el-button type="warning" size="small" @click="openUpdateUserDialog(row)">修改</el-button>
@@ -514,6 +514,29 @@ const createUser = async () => {
         if (response.code === 200) {
           ElMessage.success("创建成功");
           console.log("创建用户响应数据", response);
+          if(userPagination.value.cachedData.get(userPagination.value.serverPage)){
+            userPagination.value.cachedData.get(userPagination.value.serverPage).unshift({
+              userId: response.data,
+              userName: createUserForm.value.user_name,
+              belongUserName: localStorage.getItem("user_name"),
+              userAccount: createUserForm.value.user_account,
+              userEmail: createUserForm.value.user_email,
+              userStatus: userStatus.USER_STATUS_UNASSIGNED,
+            })
+          }else{
+            userPagination.value.cachedData.set(
+              userPagination.value.serverPage,
+              [{
+                userId: response.data,
+                userName: createUserForm.value.user_name,
+                belongUserName: localStorage.getItem("user_name"),
+                userAccount: createUserForm.value.user_account,
+                userEmail: createUserForm.value.user_email,
+                userStatus: userStatus.USER_STATUS_UNASSIGNED,
+              }]
+          )
+          }
+          userPagination.value.totalItems = userPagination.value.totalItems + 1
           closeCreateUserDialog();
           clearCreateUserForm();
         } else {
