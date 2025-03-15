@@ -1,4 +1,5 @@
 import request from "../../request";
+import {testApi} from "../../request";
 
 export const templateApi = {
   // 查看模板

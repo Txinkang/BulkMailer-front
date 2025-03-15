@@ -214,6 +214,7 @@ import { ref, computed } from 'vue'
 import { fileApi } from '@/api/file/file.js'
 import { errorHandler } from '@/utils/errorHandler.js'
 import SmartPagination from '@/components/SmartPagination.vue'
+import { ElMessage, ElLoading } from 'element-plus'
 
 // 导入必要的 TinyMCE 组件
 import 'tinymce/tinymce'
@@ -243,7 +244,6 @@ const receiverInfo = [
   { key: 'contact_person', label: '联系人' },
   { key: 'contact_way', label: '联系方式' },
   { key: 'receiver_country', label: '收件人国家' },
-  { key: 'trade_type', label: '贸易类型' },
   { key: 'sex', label: '性别' },
   { key: 'birth', label: '出生日期' }
 ]
@@ -337,14 +337,94 @@ const insertImg = () => {
   editorInstance.selection.moveToBookmark(currentBookmark);
 
   // 插入图片
-  selectedImages.value.forEach(imageUrl => {
-    const imgContent = `<img src="${imageUrl}" alt="图片" />`;
-    editorInstance.execCommand('mceInsertContent', false, imgContent);
-  });
-  selectedImages.value = []; // 清空选择
+  selectedImages.value.forEach(async imageUrl => {// 显示加载提示
+    const loading = ElLoading.service({
+      text: '正在处理图片...'
+    })
+    try {
+      const base64Data = await urlToBase64(imageUrl)
+      if (base64Data) {
+        const compressedBase64 = await compressImage(base64Data, 0.8) // 控制在 800KB 以内
+        const imgContent = `<p><img src="${compressedBase64}" alt="图片" /></p>`
+        editorInstance.execCommand('mceInsertContent', false, imgContent)
+      }
+    } catch(error) {
+      console.error('处理图片插入失败:', error)
+      ElMessage.error('处理图片失败，请检查图片是否存在或过大')
+    } finally {
+      loading.close()
+    }
 
-  // 隐藏图片选择对话框
+    // const imgContent = `<p><img src="${imageUrl}" style="width: 100%; height: auto;"/></p>`;
+    // editorInstance.execCommand('mceInsertContent', false, imgContent);
+  });
+  selectedImages.value = [];
   insertImgDialog.value = false;
+}
+// 处理图片
+const urlToBase64 = (url) => {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas')
+        const ctx = canvas.getContext('2d')
+        canvas.width = img.width
+        canvas.height = img.height
+        ctx.drawImage(img, 0, 0)
+        // 先用较高质量转换
+        const base64 = canvas.toDataURL('image/jpeg', 0.9)
+        resolve(base64)
+      } catch (e) {
+        reject(new Error('Canvas 转换失败'))
+      }
+    }
+
+    img.onerror = () => {
+      reject(new Error('图片加载失败'))
+    }
+
+    img.src = url
+  })
+}
+const compressImage = (base64, maxSizeMB = 0.5) => {  // 减小目标大小
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.src = base64
+
+    img.onload = () => {
+      let quality = 0.7  // 降低初始质量
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+
+      // 更激进的尺寸压缩
+      let width = img.width
+      let height = img.height
+      const maxDimension = 800  // 降低最大尺寸
+
+      if (width > maxDimension || height > maxDimension) {
+        const ratio = Math.min(maxDimension / width, maxDimension / height)
+        width = Math.floor(width * ratio)
+        height = Math.floor(height * ratio)
+      }
+
+      canvas.width = width
+      canvas.height = height
+      ctx.drawImage(img, 0, 0, width, height)
+
+      let compressed = canvas.toDataURL('image/jpeg', quality)
+
+      // 如果还是太大，继续压缩
+      while (compressed.length > maxSizeMB * 1024 * 1024 && quality > 0.1) {
+        quality -= 0.1
+        compressed = canvas.toDataURL('image/jpeg', quality)
+      }
+
+      resolve(compressed)
+    }
+  })
 }
 // 搜索图片点击事件
 const handleImgSearch = () => {

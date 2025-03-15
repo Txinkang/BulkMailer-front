@@ -170,16 +170,13 @@ const sendCircleEmail = async () => {
     const requestData = {
       subject: circleTaskForm.value.subject,
       email_type_id: circleTaskForm.value.email_type_id,
-      template_id: circleTaskForm.value.template_id || null,
+      template_id: circleTaskForm.value.template_id,
       receiver_id: circleTaskForm.value.customer_value?.receiver_ids || [],
       receiver_supplier_id: circleTaskForm.value.supplier_value?.receiver_ids || [],
       receiver_key: circleTaskForm.value.customer_value?.receiver_key || null,
       receiver_supplier_key: circleTaskForm.value.supplier_value?.receiver_key || null,
       cancel_receiver_id: null,
-      attachment: circleTaskForm.value.attachment.map(item => ({
-        attachment_id: item.attachment_id,
-        attachment_url: item.attachment_url
-      })),
+      attachments: circleTaskForm.value.attachment.length > 0 ? circleTaskForm.value.attachment : [],
       send_cycle: circleTaskForm.value.send_cycle,
     }
     console.log("发送循环邮件请求数据", requestData);
@@ -196,8 +193,11 @@ const sendCircleEmail = async () => {
   }
 }
 const handleReceiversSelect = (result) => {
-  circleTaskForm.value.supplier_value = result.type === emailData.ReceiverType.Supplier ? result : null
-  circleTaskForm.value.customer_value = result.type === emailData.ReceiverType.Customer ? result : null
+  if(result.type === emailData.ReceiverType.Supplier){
+    circleTaskForm.value.supplier_value = result
+  }else if(result.type === emailData.ReceiverType.Customer){
+    circleTaskForm.value.customer_value = result
+  }
   console.log('选中的接收者：', result)
   // result 格式：{ type: 1|2, total_items: 0, receiver_key: null, receiver_ids: [] }
 }
@@ -259,17 +259,17 @@ const createCircleTaskEmailType = async (query) => {
       page_num: 1,
       page_size: 30
     }
-    console.log("创建节日发送邮件任务请求数据", requestData);
+    console.log("创建循环发送邮件任务请求数据", requestData);
     const res = await emailTypeApi.filterEmailType(requestData)
     if (res.code === 200) {
       circleTaskForm.value.emailTypeOptions = res.data.email_type
-      console.log("创建节日发送邮件任务响应数据", res);
-      console.log("创建节日发送邮件任务缓存数据", circleTaskForm.value.emailTypeOptions);
+      console.log("创建循环发送邮件任务响应数据", res);
+      console.log("创建循环发送邮件任务缓存数据", circleTaskForm.value.emailTypeOptions);
     } else {
-      errorHandler.showError("创建节日发送邮件任务失败,请重试", res);
+      errorHandler.showError("创建循环发送邮件任务失败,请重试", res);
     }
   } catch (error) {
-    errorHandler.showError("创建节日发送邮件任务失败,请重试", error);
+    errorHandler.showError("创建循环发送邮件任务失败,请重试", error);
   }
 }
 const debouncedCreateCircleTaskEmailType = debounce(createCircleTaskEmailType, 500)
@@ -281,7 +281,8 @@ const createCircleTaskValidate = async () => {
       ElMessage.warning("请填写主题");
       return false
     }
-    if(circleTaskForm.value.supplier_value === null && circleTaskForm.value.customer_value === null){
+    if((!circleTaskForm.value.supplier_value?.receiver_ids?.length && !circleTaskForm.value.supplier_value?.receiver_key) &&
+    (!circleTaskForm.value.customer_value?.receiver_ids?.length && !circleTaskForm.value.customer_value?.receiver_key)) {
       ElMessage.warning("请选择接收者");
       return false
     }

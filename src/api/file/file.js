@@ -1,5 +1,5 @@
 import request from '../request'
-
+import {testApi} from '../request'
 export const fileApi = {
   //----------------------------------附件----------------------------------
   // 上传附件信息到 ES
@@ -109,6 +109,15 @@ export const fileApi = {
   filterUser(data) {
     return request({
       url: '/file/filterUser',
+      method: 'post',
+      data: data
+    })
+  },
+
+  // 搜索管理员
+  filterAdmin(data) {
+    return request({
+      url: '/file/filterAdmin',
       method: 'post',
       data: data
     })

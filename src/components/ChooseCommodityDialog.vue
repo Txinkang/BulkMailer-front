@@ -151,7 +151,7 @@ const chooseCategory = async (query) => {
     const requestData = {
       category_name: query,
       page_num: 1,
-      page_size: 30
+      page_size: 50
     }
     console.log("搜索品类请求数据", requestData);
     const res = await commodityApi.filterCategory(requestData)
@@ -183,8 +183,8 @@ const resetCommoditySearch = () => {
 const commodityPagination = ref({
   currentPage: 1,
   serverPage: 1,
-  displayPageSize: 2,
-  serverPageSize: 4,
+  displayPageSize: 5,
+  serverPageSize: 20,
   totalItems: 0,
   cachedData: new Map()
 });

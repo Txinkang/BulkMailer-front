@@ -115,7 +115,7 @@
       </div>
 
       <div class="editToolbar">
-        <RichEditor :modelValue="manualTaskForm.template_content" />
+        <RichEditor v-model="manualTaskForm.template_content" />
       </div>
 
       <!-- 查看列表信息对话框 -->
@@ -171,10 +171,7 @@ const sendManualEmail = async () => {
       receiver_key: manualTaskForm.value.customer_value?.receiver_key || null,
       receiver_supplier_key: manualTaskForm.value.supplier_value?.receiver_key || null,
       cancel_receiver_id: null,
-      attachment: manualTaskForm.value.attachment.map(item => ({
-        attachment_id: item.attachment_id,
-        attachment_url: item.attachment_url
-      })),
+      attachment: manualTaskForm.value.attachment.length > 0 ? manualTaskForm.value.attachment : null,
     }
     console.log("发送手动邮件请求数据", requestData);
     const res = await sendEmailApi.sendEmail(requestData)
@@ -190,9 +187,14 @@ const sendManualEmail = async () => {
   }
 }
 const handleReceiversSelect = (result) => {
-  manualTaskForm.value.supplier_value = result.type === emailData.ReceiverType.Supplier ? result : null
-  manualTaskForm.value.customer_value = result.type === emailData.ReceiverType.Customer ? result : null
+  if(result.type === emailData.ReceiverType.Supplier){
+    manualTaskForm.value.supplier_value = result
+  }else if(result.type === emailData.ReceiverType.Customer){
+    manualTaskForm.value.customer_value = result
+  }
   console.log('选中的接收者：', result)
+  console.log('选中的供应商：', manualTaskForm.value.supplier_value)
+  console.log('选中的客户：', manualTaskForm.value.customer_value)
   // result 格式：{ type: 1|2, total_items: 0, receiver_key: null, receiver_ids: [] }
 }
 const handleManualAttachmentsUpdate = (attachments) => {
@@ -200,20 +202,6 @@ const handleManualAttachmentsUpdate = (attachments) => {
   console.log('手动发送选中的附件：', attachments)
 }
 const handleManualTemplateSelect = async (template) => {
-  // try {
-  //   const requestData = {
-  //     template: template.id,
-  //   }
-  //   const res = await sendEmailApi.useTemplate(requestData)
-  //   if (res.code === 200) {
-  //     manualTaskForm.value.template_content = res.data.template_content
-  //   } else {
-  //     errorHandler.showError("手动发送选中的模版失败,请重试", res);
-  //   }
-  // } catch (error) {
-  //   errorHandler.showError("手动发送选中的模版失败,请重试", error);
-  // }
-
   try {
     const requestData = {
       template_id: template.id
@@ -223,6 +211,8 @@ const handleManualTemplateSelect = async (template) => {
     if (res.code === 200) {
       console.log("查看模板响应数据成功", res);
       manualTaskForm.value.template_content = res.data;
+      manualTaskForm.value.template_id = template.id;
+      manualTaskForm.value.template_name = template.name;
     } else {
       errorHandler.showError("失败,请重试", res);
     }
@@ -274,7 +264,7 @@ const checkAttachmentList = (attachments) => {
   listDialog.value = true
 }
 //=====================================其他功能=====================================
-// 创建节日发送邮件任务
+// 创建手动发送邮件任务
 const createManualTaskEmailType = async (query) => {
   try {
     const requestData = {
@@ -321,7 +311,8 @@ const createManualTaskValidate = async () => {
       ElMessage.warning("请填写主题");
       return false
     }
-    if(manualTaskForm.value.supplier_value === null && manualTaskForm.value.customer_value === null){
+    if((!manualTaskForm.value.supplier_value?.receiver_ids?.length && !manualTaskForm.value.supplier_value?.receiver_key) &&
+    (!manualTaskForm.value.customer_value?.receiver_ids?.length && !manualTaskForm.value.customer_value?.receiver_key)) {
       ElMessage.warning("请选择接收者");
       return false
     }

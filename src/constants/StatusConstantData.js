@@ -25,7 +25,8 @@ const statusData = {
 
   // Email status
   EMAIL_STATUS_SUCCESS: 200,
-  EMAIL_STATUS_FAILED: 500
+  EMAIL_STATUS_FAILED: 500,
+  EMAIL_STATUS_BOUNCE: 535
 }
 
 export default statusData

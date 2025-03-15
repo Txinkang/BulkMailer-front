@@ -1,0 +1,85 @@
+events {
+    worker_connections 1024;
+}
+
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+
+    # 添加这些基本配置
+    sendfile        on;
+    tcp_nopush      on;
+    tcp_nodelay     on;
+    keepalive_timeout  65;
+    types_hash_max_size 2048;
+
+    # 添加 gzip 压缩
+    gzip  on;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+
+    server {
+        listen 80;
+        server_name _;
+        
+        # 设置根目录
+        root /usr/share/nginx/html;
+        index index.html;
+
+        # 静态资源缓存设置
+        location /assets/ {
+            expires 1y;
+            add_header Cache-Control "public, no-transform";
+            try_files $uri $uri/ /index.html;
+        }
+
+        location / {
+            try_files $uri $uri/ /index.html;
+        }
+	# 请求路径
+        location /api/ {
+            proxy_pass ${API_BASE_URL};
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+	# 附件上传路径
+        location  ~ ^/attachment/(.*)$ {
+    	    proxy_pass ${ATTACHMENT_BASE_URL}$1;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+
+	    # 传递文件服务器头信息
+            proxy_pass_header X-Actual-File-Path;
+            proxy_hide_header X-Actual-File-Path;
+        }
+	# 图片上传路径
+        location ~ ^/img/(.*)$ {
+            proxy_pass ${IMG_BASE_URL}$1;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+
+	    # 传递文件服务器头信息
+            proxy_pass_header X-Actual-File-Path;
+            proxy_hide_header X-Actual-File-Path;
+        }
+
+
+        # 正确处理各种文件类型
+        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+            expires 1y;
+            add_header Cache-Control "public, no-transform";
+            try_files $uri $uri/ /index.html;
+        }
+
+        # 错误页面配置
+        error_page   500 502 503 504  /50x.html;
+        location = /50x.html {
+            root   /usr/share/nginx/html;
+        }
+    }
+}

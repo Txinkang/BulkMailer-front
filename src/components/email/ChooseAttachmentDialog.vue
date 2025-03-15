@@ -173,8 +173,8 @@ const clearAttachmentCache = () => {
 const handleConfirm = () => {
   // 筛选attachmentGroup数组，只保留attachment_id和attachment_url字段
   attachmentGroup.value = attachmentGroup.value.map(item => ({
-    attachment_id: item.attachment_id,
-    attachment_url: item.attachment_url,
+    attachment_id: item.id,
+    attachment_url: item.url,
     attachment_name: item.name
   }))
   // 触发事件，将选中的附件传递给父组件

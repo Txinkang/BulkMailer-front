@@ -69,8 +69,8 @@
             </el-form-item>
             <el-form-item>
               <el-select
-                v-model="searchSupplierForm.acceptEmailTypeId"
-                placeholder="可接受邮件类型(可多选)"
+                v-model="searchSupplierForm.noAcceptEmailTypeId"
+                placeholder="不可接受邮件类型(可多选)"
                 filterable
                 remote
                 multiple
@@ -224,13 +224,13 @@
                 </template>
               </el-table-column>
               <!-- 接受邮件类型列 -->
-              <el-table-column label="接受邮件类型列表" min-width="200">
+              <el-table-column label="不可接受邮件类型列表" min-width="200">
                 <template #default="{ row }">
-                  <span>共 {{ row.accept_email_type_name.length }} 个邮箱类型</span>
+                  <span>共 {{ row.no_accept_email_type_name.length }} 个邮件类型</span>
                   <el-button
                     size="mini"
                     type="text"
-                    @click="checkEmailTypeList(row, 'accept_email_type_name')">
+                    @click="checkEmailTypeList(row, 'no_accept_email_type_name')">
                     查看
                   </el-button>
                 </template>
@@ -619,7 +619,7 @@ const searchSupplierForm = ref({
   sex: '',
   birth: '',
   email: '',
-  acceptEmailTypeId: [],
+  noAcceptEmailTypeId: [],
   emailTypeOptions: [],
   belongUserName: '',
   creatorName: '',
@@ -701,7 +701,7 @@ const importSupplier = async (file) => {
       ElMessageBox.alert(
         `导入供应商成功:
         成功${res.data}条。
-        \n如果有数据导入失败，原因可能为：格式不准确`,
+        \n如果有数据导入失败，原因可能为：邮箱已被注册，或其他参数不正确。`,
         '导入结果',
         {
           type: 'success',
@@ -742,12 +742,12 @@ const createSupplier = async () => {
           console.log("创建供应商成功", res);
           closeCreateSupplierDialog()
         } else {
-          errorHandler.showError("创建供应商失败,请重试", res);
+          errorHandler.showError("创建供应商失败,请重试。可能是邮箱已被注册，或其他参数不正确。", res);
         }
       }
     })
   } catch (error) {
-    errorHandler.showError("创建供应商失败,请重试", error);
+    errorHandler.showError("创建供应商失败,请重试。可能是邮箱已被注册，或其他参数不正确。", error);
   }
 }
 // 搜索供应商点击事件
@@ -768,7 +768,7 @@ const resetSearchSupplier = () => {
     sex: '',
     birth: '',
     email: '',
-    acceptEmailTypeId: [],
+    noAcceptEmailTypeId: [],
     belongUserName: '',
     creatorName: '',
     status: null,
@@ -780,20 +780,20 @@ const resetSearchSupplier = () => {
 const searchSupplier = async () => {
   try {
     const requestData = {
-      supplierName: searchSupplierForm.value.supplierName,
-      contactPerson: searchSupplierForm.value.contactPerson,
-      contactWay: searchSupplierForm.value.contactWay,
-      supplierLevel: Number(searchSupplierForm.value.supplierLevel),
-      supplierCountryId: searchSupplierForm.value.supplierCountryId,
-      tradeType: Number(searchSupplierForm.value.tradeType),
-      commodityName: searchSupplierForm.value.commodityName,
-      sex: searchSupplierForm.value.sex,
-      birth: searchSupplierForm.value.birth ? formatDate(searchSupplierForm.value.birth) : '',
-      email: searchSupplierForm.value.email,
-      acceptEmailTypeId: searchSupplierForm.value.acceptEmailTypeId,
-      belongUserName: searchSupplierForm.value.belongUserName,
-      creatorName: searchSupplierForm.value.creatorName,
-      status: Number(searchSupplierForm.value.status),
+      supplierName: searchSupplierForm.value.supplierName === '' ? null : searchSupplierForm.value.supplierName,
+      contactPerson: searchSupplierForm.value.contactPerson === '' ? null : searchSupplierForm.value.contactPerson,
+      contactWay: searchSupplierForm.value.contactWay === '' ? null : searchSupplierForm.value.contactWay,
+      supplierLevel: searchSupplierForm.value.supplierLevel ? Number(searchSupplierForm.value.supplierLevel) : null,
+      supplierCountryId: searchSupplierForm.value.supplierCountryId === '' ? null : searchSupplierForm.value.supplierCountryId,
+      tradeType: searchSupplierForm.value.tradeType ? Number(searchSupplierForm.value.tradeType) : null,
+      commodityName: searchSupplierForm.value.commodityName === '' ? null : searchSupplierForm.value.commodityName,
+      sex: searchSupplierForm.value.sex === '' ? null : searchSupplierForm.value.sex,
+      birth: searchSupplierForm.value.birth ? formatDate(searchSupplierForm.value.birth) : null,
+      email: searchSupplierForm.value.email === '' ? null : searchSupplierForm.value.email,
+      noAcceptEmailTypeId: searchSupplierForm.value.noAcceptEmailTypeId.length > 0 ? searchSupplierForm.value.noAcceptEmailTypeId : null,
+      belongUserName: searchSupplierForm.value.belongUserName === '' ? null : searchSupplierForm.value.belongUserName,
+      creatorName: searchSupplierForm.value.creatorName === '' ? null : searchSupplierForm.value.creatorName,
+      status: searchSupplierForm.value.status ? Number(searchSupplierForm.value.status) : null,
       pageNum: supplierPagination.value.serverPage,
       pageSize: supplierPagination.value.serverPageSize,
     }
@@ -816,16 +816,16 @@ const updateSupplier = async () => {
   try {
     const requestData = {
       supplierId: selectedUserId.value,
-      supplierName: updateSupplierForm.value.supplierName,
-      contactPerson: updateSupplierForm.value.contactPerson,
-      contactWay: updateSupplierForm.value.contactWay,
-      supplierLevel: Number(updateSupplierForm.value.supplierLevel),
-      supplierCountryId: updateSupplierForm.value.supplierCountryId,
-      tradeType: Number(updateSupplierForm.value.tradeType),
-      commodityId: updateSupplierForm.value.commodityId,
-      sex: updateSupplierForm.value.sex,
-      birth: updateSupplierForm.value.birth ? formatDate(updateSupplierForm.value.birth) : '',
-      emails: updateSupplierForm.value.emails[0] === '' ? updateSupplierForm.value.emails : updateSupplierForm.value.emails,
+      supplierName: updateSupplierForm.value.supplierName === '' ? null : updateSupplierForm.value.supplierName,
+      contactPerson: updateSupplierForm.value.contactPerson === '' ? null : updateSupplierForm.value.contactPerson,
+      contactWay: updateSupplierForm.value.contactWay === '' ? null : updateSupplierForm.value.contactWay,
+      supplierLevel: updateSupplierForm.value.supplierLevel ? Number(updateSupplierForm.value.supplierLevel) : null,
+      supplierCountryId: updateSupplierForm.value.supplierCountryId === '' ? null : updateSupplierForm.value.supplierCountryId,
+      tradeType: updateSupplierForm.value.tradeType ? Number(updateSupplierForm.value.tradeType) : null,
+      commodityId: updateSupplierForm.value.commodityId === '' ? null : updateSupplierForm.value.commodityId,
+      sex: updateSupplierForm.value.sex === '' ? null : updateSupplierForm.value.sex,
+      birth: updateSupplierForm.value.birth ? formatDate(updateSupplierForm.value.birth) : null,
+      emails: updateSupplierForm.value.emails[0] === '' ? null : updateSupplierForm.value.emails,
     }
     console.log("更新供应商请求数据", requestData);
     const res = await supplierApi.updateSupplier(requestData)
@@ -834,11 +834,14 @@ const updateSupplier = async () => {
       console.log("更新供应商响应数据", res);
       closeUpdateSupplierDialog()
       updateSupplierDialog.value = false;
+      // 更新成功后重新搜索
+      resetSearchSupplier();
+      await searchSupplier();
     } else {
-      errorHandler.showError("更新供应商失败,请重试", res);
+      errorHandler.showError("更新供应商失败,请重试。可能是邮箱已被注册，或其他参数不正确。", res);
     }
   } catch (error) {
-    errorHandler.showError("更新供应商失败,请重试", error);
+    errorHandler.showError("更新供应商失败,请重试。可能是邮箱已被注册，或其他参数不正确。", error);
   }
 }
 
@@ -863,6 +866,9 @@ const deleteSupplier = async (row) => {
       console.log("供应商数据缓存", supplierPagination.value.cachedData.get(supplierPagination.value.serverPage));
     } else {
       errorHandler.showError("删除供应商失败,请重试", res);
+      // 删除失败后重新搜索
+      resetSearchSupplier();
+      await searchSupplier();
     }
   } catch (error) {
     errorHandler.showError("删除供应商失败,请重试", error);
@@ -1011,7 +1017,7 @@ const chooseCreateCountry = async (query) => {
       country_name: query,
       country_code: '',
       page_num: 1,
-      page_size: 5
+      page_size: 100
     }
     console.log("搜索国家请求数据", requestData);
     const res = await countryApi.filterCountry(requestData)
@@ -1036,7 +1042,7 @@ const chooseSearchCountry = async (query) => {
       country_name: query,
       country_code: '',
       page_num: 1,
-      page_size: 10
+      page_size: 100
     }
     console.log("搜索国家请求数据", requestData);
     const res = await countryApi.filterCountry(requestData)
