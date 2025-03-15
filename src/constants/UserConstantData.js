@@ -7,6 +7,9 @@ const UserConstantData = {
   adminLargeName: '大管理员',
   adminSmallName: '小管理员',
   userName: '用户',
+  adminLargeRole: 2,
+  adminSmallRole: 3,
+  commonUserRole: 4,
 }
 
 export default UserConstantData

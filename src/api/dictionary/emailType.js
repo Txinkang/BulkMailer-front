@@ -1,5 +1,5 @@
 import request from '../request'
-
+import {testApi} from '../request'
 export const emailTypeApi = {
   // 创建邮件类型
   createEmailType(data) {

@@ -17,5 +17,13 @@ export const emailApi = {
       method: 'get',
       params: data
     })
+  },
+  // 获取生日邮件类型
+  filterBirthEmail(data) {
+    return request({
+      url: '/emailManage/filterBirthEmail',
+      method: 'get',
+      params: data
+    })
   }
 }

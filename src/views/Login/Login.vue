@@ -58,6 +58,7 @@ const loginFormRules = {
 
 const onSubmit = async () => {
   try {
+    console.log(loginForm)
     const response = await userApi.login(loginForm)
     console.log("登录响应：", response);
     if (response.code === 200) {

@@ -344,12 +344,14 @@
 
                   <el-form-item label="发送时间：">
                     <el-date-picker
-                    v-model="festivalTaskForm.start_date"
-                    type="date"
-                    placeholder="发送时间"
-                    :format="dateFormat"
-                    @change="handleMonthChange"
-                  />
+                      v-model="festivalTaskForm.start_date"
+                      type="datetime"
+                      placeholder="发送时间"
+                      :format="dateFormat"
+                      :disabledDate="(time) => time.getTime() < Date.now()"
+                      @change="handleMonthChange"
+                      style="width:200px;"
+                    />
                   </el-form-item>
 
                   <el-form-item label="邮件类型">
@@ -529,14 +531,14 @@
                   </el-table-column>
 
                   <!-- 发送时间列 -->
-                  <el-table-column label="发送时间" align="left" min-width="150">
+                  <el-table-column label="发送时间" align="left" min-width="200">
                     <template #default="{ row }">
                       <span>{{ row.start_date }}</span>
                     </template>
                   </el-table-column>
 
                   <!-- 任务状态列 -->
-                  <el-table-column label="任务状态" align="center" min-width="200">
+                  <el-table-column label="任务状态" align="center" min-width="100">
                     <template #default="{ row }">
                       <span>{{ taskStatusChinese(row.task_status) }}</span>
                     </template>
@@ -592,15 +594,17 @@
               <!-- 开启生日发送 -->
               <div class="sendEmailContainer">
                 <el-form :model="birthTaskInfo">
+
                   <el-form-item>
                     <el-switch
                       v-model="startBirth"
                       size="large"
                       inline-prompt
-                      active-text="开启"
-                      inactive-text="暂停"
                       @change="handleSwitchChange"
+                      style="margin-right: 10px;"
                     />
+                    <span v-if="startBirth === true">当前状态：开启</span>
+                    <span v-if="startBirth === false">当前状态：暂停</span>
                   </el-form-item>
 
                   <el-form-item label="选择附件：">
@@ -694,15 +698,16 @@
                   </el-form-item>
                   <el-form-item>
                     <el-select v-model="birthEmailSearchForm.receiverLevel" style="width: 200px;" placeholder="收件人等级" clearable>
-                      <el-option label="初级" :value="1"></el-option>
-                      <el-option label="中级" :value="2"></el-option>
-                      <el-option label="高级" :value="3"></el-option>
+                      <el-option label="初级" value="1"></el-option>
+                      <el-option label="中级" value="2"></el-option>
+                      <el-option label="高级" value="3"></el-option>
                     </el-select>
                   </el-form-item>
                   <el-form-item>
-                    <el-select v-model="birthEmailSearchForm.status" style="width: 200px;" placeholder="邮件状态" clearable>
-                      <el-option label="已送达" :value="200"></el-option>
-                      <el-option label="未送达" :value="500"></el-option>
+                    <el-select style="width: 200px;" placeholder="邮件状态" v-model="birthEmailSearchForm.status" clearable>
+                      <el-option label="已送达" :value="statusData.EMAIL_STATUS_SUCCESS"></el-option>
+                      <el-option label="未送达" :value="statusData.EMAIL_STATUS_FAILED"></el-option>
+                      <el-option label="发送错误" :value="statusData.EMAIL_STATUS_BOUNCE"></el-option>
                     </el-select>
                   </el-form-item>
                   <el-form-item>
@@ -738,13 +743,16 @@
                   <!-- 状态列 -->
                   <el-table-column label="状态"  min-width="100px">
                     <template #default="{ row }">
-                      <span>{{ row.email_status === statusData.EMAIL_STATUS_SUCCESS ? '已送达' : '未送达' }}</span>
+                      <span v-if="row.email_status === statusData.EMAIL_STATUS_SUCCESS">已送达</span>
+                      <span v-if="row.email_status === statusData.EMAIL_STATUS_FAILED">未送达</span>
+                      <span v-if="row.email_status === statusData.EMAIL_STATUS_BOUNCE">发送错误</span>
                     </template>
                   </el-table-column>
-                  <el-table-column label="未送达详情"  min-width="100px">
+                  <el-table-column label="未送达详情"  min-width="300px" show-overflow-tooltip>
                     <template #default="{ row }">
-                      <span v-if="row.email_status === statusData.EMAIL_STATUS_SUCCESS">无</span>
-                      <span v-if="row.email_status === statusData.EMAIL_STATUS_FAILED">{{ row.error_msg }}</span>
+                      {{ row.error_msg }}
+                      <!-- <span v-if="row.email_status === statusData.EMAIL_STATUS_SUCCESS">无</span>
+                      <span v-if="row.email_status === statusData.EMAIL_STATUS_FAILED">{{ row.error_msg }}</span> -->
                     </template>
                   </el-table-column>
 
@@ -776,7 +784,7 @@
                       <span>{{ getReceiverLevel(row.receiver_level) }}</span>
                     </template>
                   </el-table-column>
-                  <el-table-column label="收件人生日"  min-width="150px">
+                  <el-table-column label="收件人生日"  min-width="200px">
                     <template #default="{ row }">
                       <span>{{ row.receiver_birth }}</span>
                     </template>
@@ -942,7 +950,7 @@ const birthTaskChangeForm = ref({
   attachment: [],
 })
 const birthEmailSearchForm = ref({
-  taskId: birthTaskInfo.value.task_id,
+  task_id: null,
   subject: null,
   senderName: null,
   senderEmail: null,
@@ -1049,7 +1057,7 @@ const resetSearchManualTask = () => {
 const manualTaskStart = async (taskId) => {
   try {
     const requestData = {
-      task_id: taskId,
+      email_task_id: taskId,
       operate_status: 1,
     }
     console.log("开始手动发送邮件任务请求数据", requestData);
@@ -1060,8 +1068,8 @@ const manualTaskStart = async (taskId) => {
       // 更新本地缓存状态
       if(manualTaskPagination.value.cachedData.get(manualTaskPagination.value.serverPage)){
         manualTaskPagination.value.cachedData.get(manualTaskPagination.value.serverPage).forEach(item => {
-          if(item.id === taskId){
-            item.status = 1;
+          if(item.task_id === taskId){
+            item.task_status = 1;
           }
         })
       }
@@ -1075,7 +1083,7 @@ const manualTaskStart = async (taskId) => {
 const manualTaskPause = async (taskId) => {
   try {
     const requestData = {
-      task_id: taskId,
+      email_task_id: taskId,
       operate_status: 2,
     }
     console.log("暂停手动发送邮件任务请求数据", requestData);
@@ -1086,8 +1094,8 @@ const manualTaskPause = async (taskId) => {
       // 更新本地缓存状态
       if(manualTaskPagination.value.cachedData.get(manualTaskPagination.value.serverPage)){
         manualTaskPagination.value.cachedData.get(manualTaskPagination.value.serverPage).forEach(item => {
-          if(item.id === taskId){
-            item.status = 2;
+          if(item.task_id === taskId){
+            item.task_status = 2;
           }
         })
       }
@@ -1101,7 +1109,7 @@ const manualTaskPause = async (taskId) => {
 const manualTaskStop = async (taskId) => {
   try {
     const requestData = {
-      task_id: taskId,
+      email_task_id: taskId,
       operate_status: 3,
     }
     console.log("终止手动发送邮件任务请求数据", requestData);
@@ -1112,8 +1120,8 @@ const manualTaskStop = async (taskId) => {
       // 更新本地缓存状态
       if(manualTaskPagination.value.cachedData.get(manualTaskPagination.value.serverPage)){
         manualTaskPagination.value.cachedData.get(manualTaskPagination.value.serverPage).forEach(item => {
-          if(item.id === taskId){
-            item.status = 3;
+          if(item.task_id === taskId){
+            item.task_status = 3;
           }
         })
       }
@@ -1181,7 +1189,7 @@ const resetSearchCircleTask = () => {
 const circleTaskStart = async (taskId) => {
   try {
     const requestData = {
-      task_id: taskId,
+      email_task_id: taskId,
       operate_status: 1,
     }
     console.log("开始循环发送邮件任务请求数据", requestData);
@@ -1192,8 +1200,8 @@ const circleTaskStart = async (taskId) => {
       // 更新本地缓存状态
       if(circleTaskPagination.value.cachedData.get(circleTaskPagination.value.serverPage)){
         circleTaskPagination.value.cachedData.get(circleTaskPagination.value.serverPage).forEach(item => {
-          if(item.id === taskId){
-            item.status = 1;
+          if(item.task_id === taskId){
+            item.task_status = 1;
           }
         })
       }
@@ -1207,7 +1215,7 @@ const circleTaskStart = async (taskId) => {
 const circleTaskPause = async (taskId) => {
   try {
     const requestData = {
-      task_id: taskId,
+      email_task_id: taskId,
       operate_status: 2,
     }
     console.log("暂停循环发送邮件任务请求数据", requestData);
@@ -1218,8 +1226,8 @@ const circleTaskPause = async (taskId) => {
       // 更新本地缓存状态
       if(circleTaskPagination.value.cachedData.get(circleTaskPagination.value.serverPage)){
         circleTaskPagination.value.cachedData.get(circleTaskPagination.value.serverPage).forEach(item => {
-          if(item.id === taskId){
-            item.status = 2;
+          if(item.task_id === taskId){
+            item.task_status = 2;
           }
         })
       }
@@ -1233,7 +1241,7 @@ const circleTaskPause = async (taskId) => {
 const circleTaskStop = async (taskId) => {
   try {
     const requestData = {
-      task_id: taskId,
+      email_task_id: taskId,
       operate_status: 3,
     }
     console.log("终止循环发送邮件任务请求数据", requestData);
@@ -1244,8 +1252,8 @@ const circleTaskStop = async (taskId) => {
       // 更新本地缓存状态
       if(circleTaskPagination.value.cachedData.get(circleTaskPagination.value.serverPage)){
         circleTaskPagination.value.cachedData.get(circleTaskPagination.value.serverPage).forEach(item => {
-          if(item.id === taskId){
-            item.status = 3;
+          if(item.task_id === taskId){
+            item.task_status = 3;
           }
         })
       }
@@ -1263,15 +1271,15 @@ const circleTaskReset = async (taskId) => {
       operate_status: 4,
     }
     console.log("重置循环发送邮件任务请求数据", requestData);
-    const res = await emailTaskApi.updateStatus(requestData)
+    const res = await emailTaskApi.resetStatus(requestData)
     if (res.code === 200) {
       ElMessage.success("重置成功");
       console.log("重置循环发送邮件任务响应数据", res);
       // 更新本地缓存状态
       if(circleTaskPagination.value.cachedData.get(circleTaskPagination.value.serverPage)){
         circleTaskPagination.value.cachedData.get(circleTaskPagination.value.serverPage).forEach(item => {
-          if(item.id === taskId){
-            item.status = 4;
+          if(item.task_id === taskId){
+            item.task_status = 4;
           }
         })
       }
@@ -1332,7 +1340,7 @@ const resetSearchFestivalTask = () => {
 const festivalTaskStart = async (taskId) => {
   try {
     const requestData = {
-      task_id: taskId,
+      email_task_id: taskId,
       operate_status: 1,
     }
     console.log("开始节日发送邮件任务请求数据", requestData);
@@ -1343,8 +1351,8 @@ const festivalTaskStart = async (taskId) => {
       // 更新本地缓存状态
       if(festivalTaskPagination.value.cachedData.get(festivalTaskPagination.value.serverPage)){
         festivalTaskPagination.value.cachedData.get(festivalTaskPagination.value.serverPage).forEach(item => {
-          if(item.id === taskId){
-            item.status = 1;
+          if(item.task_id === taskId){
+            item.task_status = 1;
           }
         })
       }
@@ -1358,7 +1366,7 @@ const festivalTaskStart = async (taskId) => {
 const festivalTaskPause = async (taskId) => {
   try {
     const requestData = {
-      task_id: taskId,
+      email_task_id: taskId,
       operate_status: 2,
     }
     console.log("暂停节日发送邮件任务请求数据", requestData);
@@ -1369,8 +1377,8 @@ const festivalTaskPause = async (taskId) => {
       // 更新本地缓存状态
       if(festivalTaskPagination.value.cachedData.get(festivalTaskPagination.value.serverPage)){
         festivalTaskPagination.value.cachedData.get(festivalTaskPagination.value.serverPage).forEach(item => {
-          if(item.id === taskId){
-            item.status = 2;
+          if(item.task_id === taskId){
+            item.task_status = 2;
           }
         })
       }
@@ -1384,7 +1392,7 @@ const festivalTaskPause = async (taskId) => {
 const festivalTaskStop = async (taskId) => {
   try {
     const requestData = {
-      task_id: taskId,
+      email_task_id: taskId,
       operate_status: 3,
     }
     console.log("终止节日发送邮件任务请求数据", requestData);
@@ -1395,8 +1403,8 @@ const festivalTaskStop = async (taskId) => {
       // 更新本地缓存状态
       if(festivalTaskPagination.value.cachedData.get(festivalTaskPagination.value.serverPage)){
         festivalTaskPagination.value.cachedData.get(festivalTaskPagination.value.serverPage).forEach(item => {
-          if(item.id === taskId){
-            item.status = 3;
+          if(item.task_id === taskId){
+            item.task_status = 3;
           }
         })
       }
@@ -1418,16 +1426,28 @@ const createFestivalTask = async () => {
       attachment: festivalTaskForm.value.attachment,
       email_type_id: festivalTaskForm.value.email_type_id,
       start_date: festivalTaskForm.value.start_date ? getStartOfDay(festivalTaskForm.value.start_date) : null,
-      receiver_id: festivalTaskForm.value.customer_value.receiver_ids,
-      receiver_key: festivalTaskForm.value.customer_value.receiver_key,
-      receiver_supplier_id: festivalTaskForm.value.supplier_value.receiver_ids,
-      receiver_supplier_key: festivalTaskForm.value.supplier_value.receiver_key,
+      receiver_id: festivalTaskForm.value.customer_value?.receiver_ids || [],
+      receiver_key: festivalTaskForm.value.customer_value?.receiver_key || null,
+      receiver_supplier_id: festivalTaskForm.value.supplier_value?.receiver_ids || [],
+      receiver_supplier_key: festivalTaskForm.value.supplier_value?.receiver_key || null,
     }
     console.log("创建节日发送邮件任务请求数据", requestData);
     const res = await emailTaskApi.createFestival(requestData)
     if (res.code === 200) {
       ElMessage.success("创建成功");
       console.log("创建节日发送邮件任务响应数据", res);
+      resetSearchFestivalTask()
+      festivalTaskForm.value = {
+        subject: null,
+        start_date: null,
+        supplier_value: null,
+        customer_value: null,
+        email_type_id: null,
+        emailTypeOptions: [],
+        template_id: null,
+        template_name: null,
+        attachment: [],
+      }
     } else {
       errorHandler.showError("创建节日发送邮件任务失败,请重试", res);
     }
@@ -1436,9 +1456,14 @@ const createFestivalTask = async () => {
   }
 }
 const handleReceiversSelect = (result) => {
-  festivalTaskForm.value.supplier_value = result.type === emailData.ReceiverType.Supplier ? result : null
-  festivalTaskForm.value.customer_value = result.type === emailData.ReceiverType.Customer ? result : null
+  if(result.type === emailData.ReceiverType.Supplier){
+    festivalTaskForm.value.supplier_value = result
+  }else if(result.type === emailData.ReceiverType.Customer){
+    festivalTaskForm.value.customer_value = result
+  }
   console.log('选中的接收者：', result)
+  console.log('节日发送供应商数据：', festivalTaskForm.value.supplier_value)
+  console.log('节日发送客户数据：', festivalTaskForm.value.customer_value)
   // result 格式：{ type: 1|2, total_items: 0, receiver_key: null, receiver_ids: [] }
 }
 const handleFestivalAttachmentsUpdate = (attachments) => {
@@ -1453,28 +1478,31 @@ const handleFestivalTemplateSelect = (template) => {
 
 // 生日发送
 const getBirthTaskId = async () => {
-  // try {
-  //   // 如果本地缓存有生日邮件任务任务id，则直接返回
-  //   if(localStorage.getItem("birthTaskInfo")){
-  //     return
-  //   }
-  //   const requestData = {
-  //     taskType: 4,
-  //     pageNum: 1,
-  //     pageSize: 5,
-  //   }
-  //   const res = await emailApi.filterTask(requestData)
-  //   if (res.code === 200) {
-  //     console.log("获取生日邮件任务响应数据", res);
-  //     localStorage.setItem("birthTaskInfo", res.data.task_info[0])
-  //     birthTaskInfo.value = localStorage.getItem("birthTaskInfo")
-  //     console.log("获取生日邮件任务信息", birthTaskInfo.value);
-  //   } else {
-  //     errorHandler.showError("获取生日邮件任务失败,请重试", res);
-  //   }
-  // } catch (error) {
-  //   errorHandler.showError("获取生日邮件任务失败,请重试", error);
-  // }
+  try {
+    // 如果本地缓存有生日邮件任务任务id，则直接返回
+    if(localStorage.getItem("birthTaskInfo")){
+      return
+    }
+    const requestData = {
+      task_type: 4,
+      page_num: 1,
+      page_size: 5,
+    }
+    const res = await emailApi.filterTask(requestData)
+    if (res.code === 200) {
+      console.log("获取生日邮件任务响应数据", res);
+      localStorage.setItem("birthTaskInfo", res.data.task_info[0])
+      birthTaskInfo.value = res.data.task_info[0]
+      // 如果直接使用birthTaskInfo.value，赋值的是内存对象，后面改值引用会报错。所以新定义变量赋值
+      const task_id = birthTaskInfo.value.task_id
+      birthEmailSearchForm.value.task_id = task_id
+      console.log("获取生日邮件任务信息", birthEmailSearchForm.value);
+    } else {
+      errorHandler.showError("获取生日邮件任务失败,请刷新页面重试", res);
+    }
+  } catch (error) {
+    errorHandler.showError("获取生日邮件任务失败,请刷新页面重试", error);
+  }
 }
 const searchBirthEmailClick = async () => {
   clearBirthEmailCache()
@@ -1490,7 +1518,7 @@ const searchBirthEmail = async () => {
       return
     }
     const requestData = {
-      email_task_id: birthEmailSearchForm.value.taskId,
+      //email_task_id: birthEmailSearchForm.value.task_id,
       subject: birthEmailSearchForm.value.subject === '' ? null : birthEmailSearchForm.value.subject,
       sender_name: birthEmailSearchForm.value.senderName === '' ? null : birthEmailSearchForm.value.senderName,
       sender_email: birthEmailSearchForm.value.senderEmail === '' ? null : birthEmailSearchForm.value.senderEmail,
@@ -1505,7 +1533,7 @@ const searchBirthEmail = async () => {
       page_size: birthEmailPagination.value.serverPageSize,
     }
     console.log("搜索生日发送邮件详情请求数据", requestData);
-    const res = await emailApi.filterEmail(requestData)
+    const res = await emailApi.filterBirthEmail(requestData)
     if (res.code === 200) {
       ElMessage.success("搜索成功");
       console.log("搜索生日发送邮件详情响应数据", res);
@@ -1553,7 +1581,7 @@ const startBirth = computed({
           attachment:birthTaskChangeForm.value.attachment
         }
         console.log("更新生日发送邮件任务状态请求数据", requestData);
-        const res = await emailTaskApi.updateBirthdayTaskStatus(birthTaskInfo.value.task_id, requestData)
+        const res = await emailTaskApi.updateBirthdayTaskStatus(requestData)
         if (res.code === 200) {
           ElMessage.success("开始成功");
           birthTaskInfo.value.task_status = emailData.EmailTaskStatus.SendStart
@@ -1565,7 +1593,7 @@ const startBirth = computed({
           operate_status: emailData.EmailTaskStatus.SendPause,
         }
         console.log("更新生日发送邮件任务状态请求数据", requestData);
-        const res = await emailTaskApi.updateBirthdayTaskStatus(birthTaskInfo.value.task_id, requestData)
+        const res = await emailTaskApi.updateBirthdayTaskStatus(requestData)
         if (res.code === 200) {
           birthTaskInfo.value.task_status = emailData.EmailTaskStatus.SendPause
           ElMessage.success("暂停成功");
@@ -1633,7 +1661,7 @@ const manualTaskPagination = ref({
   currentPage: 1, // 当前页
   serverPage: 1, // 服务器页
   displayPageSize: 5, // 每页显示条数
-  serverPageSize: 10, // 每页服务器条数
+  serverPageSize: 15, // 每页服务器条数
   totalItems: 0, // 总条数
   cachedData: new Map() // 缓存数据
 });
@@ -1672,7 +1700,7 @@ const circleTaskPagination = ref({
   currentPage: 1, // 当前页
   serverPage: 1, // 服务器页
   displayPageSize: 5, // 每页显示条数
-  serverPageSize: 10, // 每页服务器条数
+  serverPageSize: 15, // 每页服务器条数
   totalItems: 0, // 总条数
   cachedData: new Map() // 缓存数据
 });
@@ -1711,7 +1739,7 @@ const festivalTaskPagination = ref({
   currentPage: 1, // 当前页
   serverPage: 1, // 服务器页
   displayPageSize: 5, // 每页显示条数
-  serverPageSize: 10, // 每页服务器条数
+  serverPageSize: 15, // 每页服务器条数
   totalItems: 0, // 总条数
   cachedData: new Map() // 缓存数据
 });
@@ -1750,7 +1778,7 @@ const birthEmailPagination = ref({
   currentPage: 1, // 当前页
   serverPage: 1, // 服务器页
   displayPageSize: 5, // 每页显示条数
-  serverPageSize: 10, // 每页服务器条数
+  serverPageSize: 15, // 每页服务器条数
   totalItems: 0, // 总条数
   cachedData: new Map() // 缓存数据
 });
@@ -1857,7 +1885,8 @@ const debouncedCreateFestivalTaskEmailType = debounce(createFestivalTaskEmailTyp
 // 获取当天开始时间戳（0点）
 const getStartOfDay = (date) => {
   if (!date) return null
-  return Math.floor(new Date(new Date(date).setHours(0, 0, 0, 0)).getTime() / 1000)
+  return Math.floor(new Date(new Date(date)).getTime() / 1000)
+  // return Math.floor(new Date(new Date(date).setHours(0, 0, 0, 0)).getTime() / 1000)
 }
 // 获取当天结束时间戳（23:59:59）
 const getEndOfDay = (date) => {
@@ -1934,7 +1963,8 @@ const createFestivalTaskValidate = async () => {
       ElMessage.warning("请选择模版");
       return false
     }
-    if(festivalTaskForm.value.supplier_value === null && festivalTaskForm.value.customer_value === null){
+    if((!festivalTaskForm.value.supplier_value?.receiver_ids?.length && !festivalTaskForm.value.supplier_value?.receiver_key) &&
+    (!festivalTaskForm.value.customer_value?.receiver_ids?.length && !festivalTaskForm.value.customer_value?.receiver_key)) {
       ElMessage.warning("请选择接收者");
       return false
     }
@@ -1944,6 +1974,13 @@ const createFestivalTaskValidate = async () => {
     }
     if(festivalTaskForm.value.start_date === null || festivalTaskForm.value.start_date === ''){
       ElMessage.warning("请选择开始时间");
+      return false
+    }
+    // 验证开始时间不能小于当前时间
+    const currentDate = new Date()
+    const startDate = new Date(festivalTaskForm.value.start_date)
+    if (startDate < currentDate) {
+      ElMessage.warning("开始时间不能小于当前时间");
       return false
     }
     return true

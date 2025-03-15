@@ -60,6 +60,12 @@
                 <span>{{ row.userName }}</span>
               </template>
             </el-table-column>
+            <!-- 用户角色列 -->
+            <el-table-column label="用户角色" align="left" min-width="100">
+              <template #default="{ row }">
+                <span>{{ row.userRole === UserConstantData.adminLargeRole ? '大管理员' : row.userRole === UserConstantData.adminSmallRole ? '小管理员' : row.userRole === UserConstantData.commonUserRole ? '用户' : '' }}</span>
+              </template>
+            </el-table-column>
             <!-- 所属用户列 -->
             <el-table-column label="所属用户" align="left" min-width="100">
               <template #default="{ row }">
@@ -67,13 +73,13 @@
               </template>
             </el-table-column>
             <!-- 登录账号列 -->
-            <el-table-column label="登录账号" align="left" min-width="100">
+            <el-table-column label="登录账号" align="left" min-width="150">
               <template #default="{ row }">
                 <span>{{ row.userAccount }}</span>
               </template>
             </el-table-column>
             <!-- 邮箱列 -->
-            <el-table-column label="邮箱" align="left" min-width="150">
+            <el-table-column label="邮箱" align="left" min-width="250">
               <template #default="{ row }">
                 <span>{{ row.userEmail }}</span>
               </template>
@@ -95,7 +101,7 @@
             </el-table-column>
 
             <!-- 查看按钮列 -->
-            <el-table-column label="操作" align="center" min-width="220">
+            <el-table-column label="操作" align="center" min-width="280">
               <template #default="{ row }">
                 <el-button type="primary" size="small" @click="openCheckUserPasswordDialog(row)">查看</el-button>
                 <el-button type="warning" size="small" @click="openUpdateUserDialog(row)">修改</el-button>
@@ -386,6 +392,7 @@ import AssignUserDetailsDialog from '@/components/user/AssignUserDetailsDialog.v
 import CheckUserPasswordDialog from '@/components/user/CheckUserPasswordDialog.vue';
 import UpdateUserDialog from '@/components/user/UpdateUserDialog.vue';
 import UpdateUserAuthDialog from '@/components/user/UpdateUserAuthDialog.vue';
+import UserConstantData from '@/constants/UserConstantData.js';
 
 //======================数据======================
 // 状态常量

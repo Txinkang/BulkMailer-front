@@ -2,6 +2,7 @@ import axios from 'axios'
 import { ElMessageBox, ElLoading } from 'element-plus'
 import router from "@/router/index.js";
 import { errorHandler } from '@/utils/errorHandler.js';
+import UserConstantData from '@/constants/UserConstantData.js';
 // 创建 axios 实例
 const request = axios.create({
   baseURL:import.meta.env.VITE_API_BASE_URL,
@@ -30,11 +31,14 @@ request.interceptors.request.use(
     // 获取 token
     const token = localStorage.getItem('user_token')
     const expiry = localStorage.getItem('token_expiry')
-
+    const currentUserId = localStorage.getItem('user_id')
+    const currentUserRole = UserConstantData.userRole
     if (token && expiry) {
       if (new Date().getTime() <= parseInt(expiry)) {
         // 确保 token 添加到请求头
         config.headers['Authorization'] = token
+        config.headers['currentUserId'] = currentUserId
+        config.headers['currentUserRole'] = currentUserRole
       } else {
         // 关闭加载动画
         loadingInstance?.close()
@@ -91,11 +95,14 @@ testApi.interceptors.request.use(
     // 获取 token
     const token = localStorage.getItem('user_token')
     const expiry = localStorage.getItem('token_expiry')
-
+    const currentUserId = localStorage.getItem('user_id')
+    const currentUserRole = UserConstantData.userRole
     if (token && expiry) {
       if (new Date().getTime() <= parseInt(expiry)) {
         // 确保 token 添加到请求头
         config.headers['Authorization'] = token
+        config.headers['currentUserId'] = currentUserId
+        config.headers['currentUserRole'] = currentUserRole
       } else {
         // 关闭加载动画
         loadingInstance?.close()
@@ -137,8 +144,6 @@ testApi.interceptors.response.use(
     return Promise.reject(error)
   }
 )
-
-
 
 // 处理 token 过期
 const handleTokenExpired = () => {

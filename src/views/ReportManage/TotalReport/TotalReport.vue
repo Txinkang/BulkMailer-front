@@ -85,7 +85,7 @@ const initCharts = () => {
   const chartMapping = {
     allChart: allChartRef,
     deliveryChart: deliveryChartRef,
-    // openChart: openChartRef,
+    openChart: openChartRef,
     unsubscribeChart: unsubscribeChartRef,
     bounceChart: bounceChartRef
   }
@@ -116,7 +116,7 @@ const getChartOptions = (chartKey) => {
         },
       tooltip: {},
       xAxis: {
-        data: ["送达率", "退订率", "退信率"],
+        data: ["送达率", "打开率", "退订率", "退信率"],
         // 添加轴线样式
         axisLine: {
           lineStyle: {
@@ -137,7 +137,7 @@ const getChartOptions = (chartKey) => {
           type: "line",
           data: [
             totalReportData.value.delivery.rate,
-            // totalReportData.value.open.openRate,
+            totalReportData.value.open.rate,
             totalReportData.value.unsubscribe.rate,
             totalReportData.value.bounce.rate
           ],
@@ -191,41 +191,41 @@ const getChartOptions = (chartKey) => {
         }
       ]
     },
-    // openChart: {
-    //   title: { text: "打开率统计" },
-    //   tooltip: {
-    //     trigger: 'axis',
-    //     axisPointer: {
-    //       type: 'shadow'
-    //     }
-    //   },
-    //   xAxis: {
-    //     type: 'category',
-    //     data: ['发送数量', '打开数量']
-    //   },
-    //   yAxis: {
-    //     type: 'value'
-    //   },
-    //   series: [
-    //     {
-    //       type: 'bar',
-    //       data: [
-    //         {
-    //           value: totalReportData.value.open.total,
-    //           itemStyle: {
-    //             color: '#91cc75'
-    //           }
-    //         },
-    //         {
-    //           value: totalReportData.value.open.openAmount,
-    //           itemStyle: {
-    //             color: '#5470c6'
-    //           }
-    //         }
-    //       ]
-    //     }
-    //   ]
-    // },
+    openChart: {
+      title: { text: "打开率统计" },
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+          type: 'shadow'
+        }
+      },
+      xAxis: {
+        type: 'category',
+        data: ['发送数量', '打开数量']
+      },
+      yAxis: {
+        type: 'value'
+      },
+      series: [
+        {
+          type: 'bar',
+          data: [
+            {
+              value: totalReportData.value.open.total,
+              itemStyle: {
+                color: '#91cc75'
+              }
+            },
+            {
+              value: totalReportData.value.open.openAmount,
+              itemStyle: {
+                color: '#5470c6'
+              }
+            }
+          ]
+        }
+      ]
+    },
     unsubscribeChart: {
       title: { text: "退订率统计" },
       tooltip: {

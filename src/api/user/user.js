@@ -1,5 +1,5 @@
 import request from '../request'
-
+import {testApi} from '../request'
 export const userApi = {
   // 批量导入用户
   importUser(data) {
@@ -8,9 +8,9 @@ export const userApi = {
     return request({
       url: '/userManage/importUser',
       method: 'post',
-      headers: {
-        'Content-Type': 'multipart/form-data'  // 设置正确的 Content-Type
-      },
+      // headers: {
+      //   'Content-Type': 'multipart/form-data'  // 设置正确的 Content-Type
+      // },
       data: formData
     })
   },

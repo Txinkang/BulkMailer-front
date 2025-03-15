@@ -116,7 +116,7 @@ export const fileApi = {
 
   // 搜索管理员
   filterAdmin(data) {
-    return testApi({
+    return request({
       url: '/file/filterAdmin',
       method: 'post',
       data: data

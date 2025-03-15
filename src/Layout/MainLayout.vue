@@ -23,9 +23,9 @@
           @select="handleMenuSelect"
           class="menu-scrollable"
         >
-          <!-- 发送管理 -->
-          <el-menu-item class="menu-item" index="/sendEmail">手动发送</el-menu-item>
-          <el-menu-item class="menu-item" index="/circleSend">循环发送</el-menu-item>
+          <!-- 发送管理   大管理目前不给发送邮件的功能 -->
+          <!-- <el-menu-item class="menu-item" index="/sendEmail">手动发送</el-menu-item>
+          <el-menu-item class="menu-item" index="/circleSend">循环发送</el-menu-item> -->
 
           <!-- 文件管理 -->
           <el-menu-item  class="menu-item" index="/fileManage">文件管理</el-menu-item>
