@@ -43,12 +43,14 @@
               </el-input>
             </el-form-item>
             <el-form-item>
-              <el-input v-model="searchSupplierForm.belongUserName" placeholder="请搜索所属用户名称" clearable style="width:200px;margin-right: 10px">
-              </el-input>
-            </el-form-item>
-            <el-form-item>
-              <el-input v-model="searchSupplierForm.creatorName" placeholder="请搜索创建人名称" clearable style="width:200px;margin-right: 10px">
-              </el-input>
+              <el-select
+                v-model="searchSupplierForm.belongUserName"
+                style="width: 200px;margin-right: 10px"
+                placeholder="请选择所属用户"
+                clearable
+              >
+                <el-option v-for="user in supplierBelongUserList" :key="user.id" :label="user.name" :value="user.value" />
+              </el-select>
             </el-form-item>
             <el-form-item>
               <el-select
@@ -69,8 +71,8 @@
             </el-form-item>
             <el-form-item>
               <el-select
-                v-model="searchSupplierForm.acceptEmailTypeId"
-                placeholder="可接受邮件类型(可多选)"
+                v-model="searchSupplierForm.noAcceptEmailTypeId"
+                placeholder="不可接受邮件类型(可多选)"
                 filterable
                 remote
                 multiple
@@ -99,12 +101,6 @@
               </el-select>
             </el-form-item>
             <el-form-item>
-              <el-select v-model="searchSupplierForm.status" style="width:200px;margin-right: 10px" clearable placeholder="分配状态">
-                <el-option label="未分配" value="1"></el-option>
-                <el-option label="已分配" value="2"></el-option>
-              </el-select>
-            </el-form-item>
-            <el-form-item>
               <el-select v-model="searchSupplierForm.sex" style="width:200px;margin-right: 10px" clearable placeholder="性别" >
                 <el-option label="男" value="男"></el-option>
                 <el-option label="女" value="女"></el-option>
@@ -122,7 +118,7 @@
 
         <!-- 批量分配按钮 -->
         <div style="display: flex;flex-direction: column">
-          <div style="display: flex;flex-flow: row wrap;gap: 10px;margin: 0 0 20px 0">
+          <div v-if="false" style="display: flex;flex-flow: row wrap;gap: 10px;margin: 0 0 20px 0">
             <el-button type="primary" :disabled="selectedRows.length === 0" @click="openAllAssignSupplierDialog">
               批量分配
             </el-button>
@@ -133,9 +129,7 @@
 
           <!-- 表格 -->
           <div>
-            <el-table ref="supplierTableRef" :data="supplierCurrentPageData" border @selection-change="handleSelectionChange" :row-key="row => row.supplier_id" style="width: 1000px">
-              <!-- 多选框列 -->
-              <el-table-column type="selection" width="55" :reserve-selection="true"></el-table-column>
+            <el-table ref="supplierTableRef" :data="supplierCurrentPageData" border style="width: 1000px">
               <!-- 供应商名称列 -->
               <el-table-column show-overflow-tooltip label="供应商名称" align="left" min-width="200">
                 <template #default="{ row }">
@@ -152,21 +146,6 @@
               <el-table-column label="所属用户" prop="user" min-width="150">
                 <template #default="{ row }">
                   <span>{{ row.belong_user_name }}</span>
-                </template>
-              </el-table-column>
-              <!-- 状态列 -->
-              <el-table-column label="状态" min-width="150">
-                <template #default="{ row }">
-                <span class="status-text" @click="row.status === supplierStatus.SUPPLIER_STATUS_ASSIGNED && openAssignmentDetails(row)">
-                  {{ row.status === supplierStatus.SUPPLIER_STATUS_ASSIGNED ? '已分配' : '未分配' }}
-                </span>
-                  <el-button
-                    size="small"
-                    type="primary"
-                    @click="openReassignDialog(row)"
-                  >
-                    {{ row.status === supplierStatus.SUPPLIER_STATUS_ASSIGNED ? '重新分配' : '去分配' }}
-                  </el-button>
                 </template>
               </el-table-column>
               <!-- 联系人列 -->
@@ -224,13 +203,13 @@
                 </template>
               </el-table-column>
               <!-- 接受邮件类型列 -->
-              <el-table-column label="接受邮件类型列表" min-width="200">
+              <el-table-column label="不可接受邮件类型列表" min-width="200">
                 <template #default="{ row }">
-                  <span>共 {{ row.accept_email_type_name.length }} 个邮箱类型</span>
+                  <span>共 {{ row.no_accept_email_type_name.length }} 个邮件类型</span>
                   <el-button
                     size="mini"
                     type="text"
-                    @click="checkEmailTypeList(row, 'accept_email_type_name')">
+                    @click="checkEmailTypeList(row, 'no_accept_email_type_name')">
                     查看
                   </el-button>
                 </template>
@@ -547,6 +526,7 @@ import AssignReceiverDialog from "@/components/receiver/AssignReceiverDialog.vue
 import SmartPagination from "@/components/SmartPagination.vue";
 import ChangeBelongUserDialog from "@/components/receiver/ChangeBelongUserDialog.vue";
 import AllAssignReceiverDialog from "@/components/receiver/AllAssignReceiverDialog.vue";
+import UserConstantData from '@/constants/UserConstantData.js';
 // ========================= 数据 =========================
 const selectedUserId = ref('');
 //=============== 创建供应商 ================
@@ -619,12 +599,14 @@ const searchSupplierForm = ref({
   sex: '',
   birth: '',
   email: '',
-  acceptEmailTypeId: [],
+  noAcceptEmailTypeId: [],
   emailTypeOptions: [],
   belongUserName: '',
   creatorName: '',
   status: null,
 });
+const supplierBelongUserList = ref([{id:1,name:'无',value:''},{id:2,name:'公司',value:UserConstantData.companyName},{id:3,name:'个人',value:localStorage.getItem('user_name')}]);
+
 //=============== 修改供应商 ================
 const updateSupplierForm = ref({
   supplierName: '',
@@ -701,7 +683,7 @@ const importSupplier = async (file) => {
       ElMessageBox.alert(
         `导入供应商成功:
         成功${res.data}条。
-        \n如果有数据导入失败，原因可能为：格式不准确`,
+        \n如果有数据导入失败，原因可能为：邮箱已被注册，或其他参数不正确。`,
         '导入结果',
         {
           type: 'success',
@@ -741,13 +723,15 @@ const createSupplier = async () => {
           ElMessage.success("创建供应商成功");
           console.log("创建供应商成功", res);
           closeCreateSupplierDialog()
+          resetSearchSupplier()
+          await searchSupplier()
         } else {
-          errorHandler.showError("创建供应商失败,请重试", res);
+          errorHandler.showError("创建供应商失败,请重试。可能是邮箱已被注册，或其他参数不正确。", res);
         }
       }
     })
   } catch (error) {
-    errorHandler.showError("创建供应商失败,请重试", error);
+    errorHandler.showError("创建供应商失败,请重试。可能是邮箱已被注册，或其他参数不正确。", error);
   }
 }
 // 搜索供应商点击事件
@@ -768,7 +752,7 @@ const resetSearchSupplier = () => {
     sex: '',
     birth: '',
     email: '',
-    acceptEmailTypeId: [],
+    noAcceptEmailTypeId: [],
     belongUserName: '',
     creatorName: '',
     status: null,
@@ -780,20 +764,20 @@ const resetSearchSupplier = () => {
 const searchSupplier = async () => {
   try {
     const requestData = {
-      supplierName: searchSupplierForm.value.supplierName,
-      contactPerson: searchSupplierForm.value.contactPerson,
-      contactWay: searchSupplierForm.value.contactWay,
-      supplierLevel: Number(searchSupplierForm.value.supplierLevel),
-      supplierCountryId: searchSupplierForm.value.supplierCountryId,
-      tradeType: Number(searchSupplierForm.value.tradeType),
-      commodityName: searchSupplierForm.value.commodityName,
-      sex: searchSupplierForm.value.sex,
-      birth: searchSupplierForm.value.birth ? formatDate(searchSupplierForm.value.birth) : '',
-      email: searchSupplierForm.value.email,
-      acceptEmailTypeId: searchSupplierForm.value.acceptEmailTypeId,
-      belongUserName: searchSupplierForm.value.belongUserName,
-      creatorName: searchSupplierForm.value.creatorName,
-      status: Number(searchSupplierForm.value.status),
+      supplierName: searchSupplierForm.value.supplierName === '' ? null : searchSupplierForm.value.supplierName,
+      contactPerson: searchSupplierForm.value.contactPerson === '' ? null : searchSupplierForm.value.contactPerson,
+      contactWay: searchSupplierForm.value.contactWay === '' ? null : searchSupplierForm.value.contactWay,
+      supplierLevel: searchSupplierForm.value.supplierLevel ? Number(searchSupplierForm.value.supplierLevel) : null,
+      supplierCountryId: searchSupplierForm.value.supplierCountryId === '' ? null : searchSupplierForm.value.supplierCountryId,
+      tradeType: searchSupplierForm.value.tradeType ? Number(searchSupplierForm.value.tradeType) : null,
+      commodityName: searchSupplierForm.value.commodityName === '' ? null : searchSupplierForm.value.commodityName,
+      sex: searchSupplierForm.value.sex === '' ? null : searchSupplierForm.value.sex,
+      birth: searchSupplierForm.value.birth ? formatDate(searchSupplierForm.value.birth) : null,
+      email: searchSupplierForm.value.email === '' ? null : searchSupplierForm.value.email,
+      noAcceptEmailTypeId: searchSupplierForm.value.noAcceptEmailTypeId[0] === '' ? null : searchSupplierForm.value.noAcceptEmailTypeId,
+      belongUserName: searchSupplierForm.value.belongUserName === '' ? null : searchSupplierForm.value.belongUserName,
+      creatorName: searchSupplierForm.value.creatorName === '' ? null : searchSupplierForm.value.creatorName,
+      status: searchSupplierForm.value.status ? Number(searchSupplierForm.value.status) : null,
       pageNum: supplierPagination.value.serverPage,
       pageSize: supplierPagination.value.serverPageSize,
     }
@@ -816,16 +800,16 @@ const updateSupplier = async () => {
   try {
     const requestData = {
       supplierId: selectedUserId.value,
-      supplierName: updateSupplierForm.value.supplierName,
-      contactPerson: updateSupplierForm.value.contactPerson,
-      contactWay: updateSupplierForm.value.contactWay,
-      supplierLevel: Number(updateSupplierForm.value.supplierLevel),
-      supplierCountryId: updateSupplierForm.value.supplierCountryId,
-      tradeType: Number(updateSupplierForm.value.tradeType),
-      commodityId: updateSupplierForm.value.commodityId,
-      sex: updateSupplierForm.value.sex,
-      birth: updateSupplierForm.value.birth ? formatDate(updateSupplierForm.value.birth) : '',
-      emails: updateSupplierForm.value.emails[0] === '' ? updateSupplierForm.value.emails : updateSupplierForm.value.emails,
+      supplierName: updateSupplierForm.value.supplierName === '' ? null : updateSupplierForm.value.supplierName,
+      contactPerson: updateSupplierForm.value.contactPerson === '' ? null : updateSupplierForm.value.contactPerson,
+      contactWay: updateSupplierForm.value.contactWay === '' ? null : updateSupplierForm.value.contactWay,
+      supplierLevel: updateSupplierForm.value.supplierLevel ? Number(updateSupplierForm.value.supplierLevel) : null,
+      supplierCountryId: updateSupplierForm.value.supplierCountryId === '' ? null : updateSupplierForm.value.supplierCountryId,
+      tradeType: updateSupplierForm.value.tradeType ? Number(updateSupplierForm.value.tradeType) : null,
+      commodityId: updateSupplierForm.value.commodityId === '' ? null : updateSupplierForm.value.commodityId,
+      sex: updateSupplierForm.value.sex === '' ? null : updateSupplierForm.value.sex,
+      birth: updateSupplierForm.value.birth ? formatDate(updateSupplierForm.value.birth) : null,
+      emails: updateSupplierForm.value.emails[0] === '' ? null : updateSupplierForm.value.emails,
     }
     console.log("更新供应商请求数据", requestData);
     const res = await supplierApi.updateSupplier(requestData)
@@ -834,11 +818,13 @@ const updateSupplier = async () => {
       console.log("更新供应商响应数据", res);
       closeUpdateSupplierDialog()
       updateSupplierDialog.value = false;
+      resetSearchSupplier()
+      await searchSupplier()
     } else {
-      errorHandler.showError("更新供应商失败,请重试", res);
+      errorHandler.showError("更新供应商失败,请重试。可能是邮箱已被注册，或其他参数不正确。", res);
     }
   } catch (error) {
-    errorHandler.showError("更新供应商失败,请重试", error);
+    errorHandler.showError("更新供应商失败,请重试。可能是邮箱已被注册，或其他参数不正确。", error);
   }
 }
 
@@ -863,6 +849,8 @@ const deleteSupplier = async (row) => {
       console.log("供应商数据缓存", supplierPagination.value.cachedData.get(supplierPagination.value.serverPage));
     } else {
       errorHandler.showError("删除供应商失败,请重试", res);
+      resetSearchSupplier()
+      await searchSupplier()
     }
   } catch (error) {
     errorHandler.showError("删除供应商失败,请重试", error);
@@ -1011,7 +999,7 @@ const chooseCreateCountry = async (query) => {
       country_name: query,
       country_code: '',
       page_num: 1,
-      page_size: 5
+      page_size: 100
     }
     console.log("搜索国家请求数据", requestData);
     const res = await countryApi.filterCountry(requestData)
@@ -1036,7 +1024,7 @@ const chooseSearchCountry = async (query) => {
       country_name: query,
       country_code: '',
       page_num: 1,
-      page_size: 10
+      page_size: 100
     }
     console.log("搜索国家请求数据", requestData);
     const res = await countryApi.filterCountry(requestData)
@@ -1054,7 +1042,7 @@ const chooseSearchCountry = async (query) => {
 }
 const debouncedSearchCountry = debounce(chooseSearchCountry, 500)
 
-// 搜索供应商选择可接受邮件类型
+// 搜索供应商选择不可接受邮件类型
 const chooseSearchEmailType = async (query) => {
   try {
     const requestData = {
@@ -1062,17 +1050,17 @@ const chooseSearchEmailType = async (query) => {
       page_num: 1,
       page_size: 30
     }
-    console.log("搜索可接受邮件类型请求数据", requestData);
+    console.log("搜索不可接受邮件类型请求数据", requestData);
     const res = await emailTypeApi.filterEmailType(requestData)
     if (res.code === 200) {
       searchSupplierForm.value.emailTypeOptions = res.data.email_type
-      console.log("搜索供应商选择可接受邮件类型响应数据", res);
-      console.log("搜索供应商选择可接受邮件类型缓存数据", searchSupplierForm.value.emailTypeOptions);
+      console.log("搜索供应商选择不可接受邮件类型响应数据", res);
+      console.log("搜索供应商选择不可接受邮件类型缓存数据", searchSupplierForm.value.emailTypeOptions);
     } else {
-      errorHandler.showError("搜索可接受邮件类型失败,请重试", res);
+      errorHandler.showError("搜索不可接受邮件类型失败,请重试", res);
     }
   } catch (error) {
-    errorHandler.showError("搜索可接受邮件类型失败,请重试", error);
+    errorHandler.showError("搜索不可接受邮件类型失败,请重试", error);
   }
 }
 const debouncedSearchEmailType = debounce(chooseSearchEmailType, 500)

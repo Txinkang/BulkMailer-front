@@ -1,0 +1,11 @@
+version: '3'
+services:
+  frontend:
+    image: admin-large-app  # 使用构建好的镜像
+    container_name: admin-large-app
+    environment:
+      - API_BASE_URL=https://www.tangxinkang.com:9900/
+      - ATTACHMENT_BASE_URL=http://112.35.176.43:9901/attachments/
+      - IMG_BASE_URL=http://112.35.176.43:9901/imgs/
+    ports:
+      - "10003:80"  # 端口映射

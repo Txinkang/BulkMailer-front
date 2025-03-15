@@ -346,7 +346,7 @@
 
 <script setup>
 import {ref, computed } from "vue";
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage, ElMessageBox, ElLoading} from 'element-plus'
 import { errorHandler } from '@/utils/errorHandler.js'
 import { fileApi } from '@/api/file/file.js'
 import UserConstantData from "@/constants/UserConstantData";
@@ -618,8 +618,14 @@ const handleRemoveAttachment = (file) => {
 
 // 上传附件处理函数
 const handleUploadAttachment = async () => {
+  let loadingInstance = null
   try {
     isUploading.value = true
+    loadingInstance = ElLoading.service({
+      lock: true,
+      text: '上传中...',
+      background: 'rgba(0, 0, 0, 0.7)'
+    })
     console.log('要上传的附件列表：', attachments.value)
 
     const originalFiles = [...attachments.value]
@@ -648,11 +654,12 @@ const handleUploadAttachment = async () => {
           setTimeout(() => {
             if (xhr.status >= 200 && xhr.status < 300) {
               uploadProgress.value[file.name] = 100
-
+              const attachment_url = xhr.getResponseHeader('X-Actual-File-Path')
+              console.log('文件上传成功:', attachment_url)
               // 收集成功上传的文件信息
               const fileInfo = {
                 attachment_id: safeFileName,
-                attachment_url: `${uploadAttachmentUrl}/${safeFileName}`,
+                attachment_url: attachment_url,
                 attachment_size: file.size,
                 attachment_name: originalName
               }
@@ -733,6 +740,7 @@ const handleUploadAttachment = async () => {
     errorHandler.showError("附件上传出错,请重试",error)
   } finally {
     isUploading.value = false
+    loadingInstance?.close()
     uploadXHRs.value = {}
     setTimeout(() => {
       uploadProgress.value = {}
@@ -910,8 +918,14 @@ const handleRemoveImg = (file) => {
 
 // 上传图片处理函数
 const handleUploadImg = async () => {
+  let loadingInstance = null
   try {
     isUploading.value = true
+    loadingInstance = ElLoading.service({
+      lock: true,
+      text: '上传中...',
+      background: 'rgba(0, 0, 0, 0.7)'
+    })
     console.log('要上传的图片列表：', imgs.value)
 
     const originalFiles = [...imgs.value]
@@ -940,11 +954,12 @@ const handleUploadImg = async () => {
           setTimeout(() => {
             if (xhr.status >= 200 && xhr.status < 300) {
               uploadProgress.value[file.name] = 100
-
+              const img_url = xhr.getResponseHeader('X-Actual-File-Path')
+              console.log('图片上传成功:', img_url)
               // 收集成功上传的文件信息
               const fileInfo = {
                 img_id: safeFileName,
-                img_url: `${uploadImgUrl}/${safeFileName}`,
+                img_url: img_url,
                 img_size: file.size,
                 img_name: originalName
               }
@@ -1025,6 +1040,7 @@ const handleUploadImg = async () => {
     errorHandler.showError("图片上传出错,请重试",error)
   } finally {
     isUploading.value = false
+    loadingInstance?.close()
     uploadXHRs.value = {}
     setTimeout(() => {
       uploadProgress.value = {}

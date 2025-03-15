@@ -43,16 +43,18 @@
               </el-input>
             </el-form-item>
             <el-form-item>
-              <el-input v-model="searchCustomerForm.belongUserName" placeholder="请搜索所属用户名称" clearable style="width:200px;margin-right: 10px">
-              </el-input>
-            </el-form-item>
-            <el-form-item>
-              <el-input v-model="searchCustomerForm.creatorName" placeholder="请搜索创建人名称" clearable style="width:200px;margin-right: 10px">
-              </el-input>
+                <el-select
+                  v-model="searchCustomerForm.belongUserName"
+                  style="width: 200px;margin-right: 10px"
+                  placeholder="请选择所属用户"
+                  clearable
+                >
+                  <el-option v-for="user in customerBelongUserList" :key="user.id" :label="user.name" :value="user.value" />
+                </el-select>
             </el-form-item>
             <el-form-item>
               <el-select
-                v-model="searchCustomerForm.CustomerCountryId"
+                v-model="searchCustomerForm.customerCountryId"
                 placeholder="请搜索国家名称"
                 filterable
                 remote
@@ -69,8 +71,8 @@
             </el-form-item>
             <el-form-item>
               <el-select
-                v-model="searchCustomerForm.acceptEmailTypeId"
-                placeholder="可接受邮件类型(可多选)"
+                v-model="searchCustomerForm.noAcceptEmailTypeId"
+                placeholder="不可接受邮件类型(可多选)"
                 filterable
                 remote
                 multiple
@@ -99,12 +101,6 @@
               </el-select>
             </el-form-item>
             <el-form-item>
-              <el-select v-model="searchCustomerForm.status" style="width:200px;margin-right: 10px" clearable placeholder="分配状态">
-                <el-option label="未分配" value="1"></el-option>
-                <el-option label="已分配" value="2"></el-option>
-              </el-select>
-            </el-form-item>
-            <el-form-item>
               <el-select v-model="searchCustomerForm.sex" style="width:200px;margin-right: 10px" clearable placeholder="性别" >
                 <el-option label="男" value="男"></el-option>
                 <el-option label="女" value="女"></el-option>
@@ -122,7 +118,7 @@
 
         <!-- 批量分配按钮 -->
         <div style="display: flex;flex-direction: column">
-          <div style="display: flex;flex-flow: row wrap;gap: 10px;margin: 0 0 20px 0">
+          <div v-if="false" style="display: flex;flex-flow: row wrap;gap: 10px;margin: 0 0 20px 0">
             <el-button type="primary" :disabled="selectedRows.length === 0" @click="openAllAssignCustomerDialog">
               批量分配
             </el-button>
@@ -133,9 +129,7 @@
 
           <!-- 表格 -->
           <div>
-            <el-table ref="customerTableRef" :data="customerCurrentPageData" border @selection-change="handleSelectionChange" :row-key="row => row.customer_id" style="width: 1000px">
-              <!-- 多选框列 -->
-              <el-table-column type="selection" width="55" :reserve-selection="true"></el-table-column>
+            <el-table ref="customerTableRef" :data="customerCurrentPageData" border style="width: 1000px">
               <!-- 客户名称列 -->
               <el-table-column show-overflow-tooltip label="客户名称" align="left" min-width="200">
                 <template #default="{ row }">
@@ -152,21 +146,6 @@
               <el-table-column label="所属用户" prop="user" min-width="150">
                 <template #default="{ row }">
                   <span>{{ row.belong_user_name }}</span>
-                </template>
-              </el-table-column>
-              <!-- 状态列 -->
-              <el-table-column label="状态" min-width="150">
-                <template #default="{ row }">
-                <span class="status-text" @click="row.status === customerStatus.CUSTOMER_STATUS_ASSIGNED && openAssignmentDetails(row)">
-                  {{ row.status === customerStatus.CUSTOMER_STATUS_ASSIGNED ? '已分配' : '未分配' }}
-                </span>
-                  <el-button
-                    size="small"
-                    type="primary"
-                    @click="openReassignDialog(row)"
-                  >
-                    {{ row.status === customerStatus.CUSTOMER_STATUS_ASSIGNED ? '重新分配' : '去分配' }}
-                  </el-button>
                 </template>
               </el-table-column>
               <!-- 联系人列 -->
@@ -224,13 +203,13 @@
                 </template>
               </el-table-column>
               <!-- 接受邮件类型列 -->
-              <el-table-column label="接受邮件类型列表" min-width="200">
+              <el-table-column label="不可接受邮件类型列表" min-width="200">
                 <template #default="{ row }">
-                  <span>共 {{ row.accept_email_type_name.length }} 个邮箱类型</span>
+                  <span>共 {{ row.no_accept_email_type_name.length }} 个邮件类型</span>
                   <el-button
                     size="mini"
                     type="text"
-                    @click="checkEmailTypeList(row, 'accept_email_type_name')">
+                    @click="checkEmailTypeList(row, 'no_accept_email_type_name')">
                     查看
                   </el-button>
                 </template>
@@ -547,6 +526,7 @@ import AssignReceiverDialog from "@/components/receiver/AssignReceiverDialog.vue
 import SmartPagination from "@/components/SmartPagination.vue";
 import ChangeBelongUserDialog from "@/components/receiver/ChangeBelongUserDialog.vue";
 import AllAssignReceiverDialog from "@/components/receiver/AllAssignReceiverDialog.vue";
+import UserConstantData from "@/constants/UserConstantData.js";
 // ========================= 数据 =========================
 const selectedUserId = ref('');
 //=============== 创建客户 ================
@@ -619,7 +599,7 @@ const searchCustomerForm = ref({
   sex: '',
   birth: '',
   email: '',
-  acceptEmailTypeId: [],
+  noAcceptEmailTypeId: [],
   emailTypeOptions: [],
   belongUserName: '',
   creatorName: '',
@@ -640,6 +620,7 @@ const updateCustomerForm = ref({
   birth: '',
   emails: ['']
 })
+const customerBelongUserList = ref([{id:1,name:'无',value:''},{id:2,name:'公司',value:UserConstantData.companyName},{id:3,name:'个人',value:localStorage.getItem('user_name')}]);
 // 邮箱验证规则
 const updateEmailRules = [
   { message: '请输入邮箱地址', trigger: 'blur' },
@@ -701,7 +682,7 @@ const importCustomer = async (file) => {
       ElMessageBox.alert(
         `导入客户成功:
         成功${res.data}条。
-        \n如果有数据导入失败，原因可能为：格式不准确`,
+        \n如果有数据导入失败，原因可能为：邮箱已被注册，或其他参数不正确。`,
         '导入结果',
         {
           type: 'success',
@@ -741,13 +722,15 @@ const createCustomer = async () => {
           ElMessage.success("创建客户成功");
           console.log("创建客户成功", res);
           closeCreateCustomerDialog()
+          resetSearchCustomer()
+          await searchCustomer()
         } else {
-          errorHandler.showError("创建客户失败,请重试", res);
+          errorHandler.showError("创建客户失败,请重试。可能是邮箱已被注册，或其他参数不正确。", res);
         }
       }
     })
   } catch (error) {
-    errorHandler.showError("创建客户失败,请重试", error);
+    errorHandler.showError("创建客户失败,请重试。可能是邮箱已被注册，或其他参数不正确。", error);
   }
 }
 // 搜索客户点击事件
@@ -768,7 +751,7 @@ const resetSearchCustomer = () => {
     sex: '',
     birth: '',
     email: '',
-    acceptEmailTypeId: [],
+    noAcceptEmailTypeId: [],
     belongUserName: '',
     creatorName: '',
     status: null,
@@ -780,20 +763,20 @@ const resetSearchCustomer = () => {
 const searchCustomer = async () => {
   try {
     const requestData = {
-      customerName: searchCustomerForm.value.customerName,
-      contactPerson: searchCustomerForm.value.contactPerson,
-      contactWay: searchCustomerForm.value.contactWay,
-      customerLevel: Number(searchCustomerForm.value.customerLevel),
-      customerCountryId: searchCustomerForm.value.customerCountryId,
-      tradeType: Number(searchCustomerForm.value.tradeType),
-      commodityName: searchCustomerForm.value.commodityName,
-      sex: searchCustomerForm.value.sex,
-      birth: searchCustomerForm.value.birth ? formatDate(searchCustomerForm.value.birth) : '',
-      email: searchCustomerForm.value.email,
-      acceptEmailTypeId: searchCustomerForm.value.acceptEmailTypeId,
-      belongUserName: searchCustomerForm.value.belongUserName,
-      creatorName: searchCustomerForm.value.creatorName,
-      status: Number(searchCustomerForm.value.status),
+      customerName: searchCustomerForm.value.customerName === '' ? null : searchCustomerForm.value.customerName,
+      contactPerson: searchCustomerForm.value.contactPerson === '' ? null : searchCustomerForm.value.contactPerson,
+      contactWay: searchCustomerForm.value.contactWay === '' ? null : searchCustomerForm.value.contactWay,
+      customerLevel: searchCustomerForm.value.customerLevel ? Number(searchCustomerForm.value.customerLevel) : null,
+      customerCountryId: searchCustomerForm.value.customerCountryId === '' ? null : searchCustomerForm.value.customerCountryId,
+      tradeType: searchCustomerForm.value.tradeType ? Number(searchCustomerForm.value.tradeType) : null,
+      commodityName: searchCustomerForm.value.commodityName === '' ? null : searchCustomerForm.value.commodityName,
+      sex: searchCustomerForm.value.sex === '' ? null : searchCustomerForm.value.sex,
+      birth: searchCustomerForm.value.birth ? formatDate(searchCustomerForm.value.birth) : null,
+      email: searchCustomerForm.value.email === '' ? null : searchCustomerForm.value.email,
+      noAcceptEmailTypeId: searchCustomerForm.value.noAcceptEmailTypeId[0] === '' ? null : searchCustomerForm.value.noAcceptEmailTypeId,
+      belongUserName: searchCustomerForm.value.belongUserName === '' ? null : searchCustomerForm.value.belongUserName,
+      creatorName: searchCustomerForm.value.creatorName === '' ? null : searchCustomerForm.value.creatorName,
+      status: searchCustomerForm.value.status ? Number(searchCustomerForm.value.status) : null,
       pageNum: customerPagination.value.serverPage,
       pageSize: customerPagination.value.serverPageSize,
     }
@@ -816,16 +799,16 @@ const updateCustomer = async () => {
   try {
     const requestData = {
       customerId: selectedUserId.value,
-      customerName: updateCustomerForm.value.customerName,
-      contactPerson: updateCustomerForm.value.contactPerson,
-      contactWay: updateCustomerForm.value.contactWay,
-      customerLevel: Number(updateCustomerForm.value.customerLevel),
-      customerCountryId: updateCustomerForm.value.customerCountryId,
-      tradeType: Number(updateCustomerForm.value.tradeType),
-      commodityId: updateCustomerForm.value.commodityId,
-      sex: updateCustomerForm.value.sex,
-      birth: updateCustomerForm.value.birth ? formatDate(updateCustomerForm.value.birth) : '',
-      emails: updateCustomerForm.value.emails[0] === '' ? updateCustomerForm.value.emails : updateCustomerForm.value.emails,
+      customerName: updateCustomerForm.value.customerName === '' ? null : updateCustomerForm.value.customerName,
+      contactPerson: updateCustomerForm.value.contactPerson === '' ? null : updateCustomerForm.value.contactPerson,
+      contactWay: updateCustomerForm.value.contactWay === '' ? null : updateCustomerForm.value.contactWay,
+      customerLevel: updateCustomerForm.value.customerLevel ? Number(updateCustomerForm.value.customerLevel) : null,
+      customerCountryId: updateCustomerForm.value.customerCountryId === '' ? null : updateCustomerForm.value.customerCountryId,
+      tradeType: updateCustomerForm.value.tradeType ? Number(updateCustomerForm.value.tradeType) : null,
+      commodityId: updateCustomerForm.value.commodityId === '' ? null : updateCustomerForm.value.commodityId,
+      sex: updateCustomerForm.value.sex === '' ? null : updateCustomerForm.value.sex,
+      birth: updateCustomerForm.value.birth ? formatDate(updateCustomerForm.value.birth) : null,
+      emails: updateCustomerForm.value.emails[0] === '' ? null : updateCustomerForm.value.emails,
     }
     console.log("更新客户请求数据", requestData);
     const res = await customerApi.updateCustomer(requestData)
@@ -834,11 +817,13 @@ const updateCustomer = async () => {
       console.log("更新客户响应数据", res);
       closeUpdateCustomerDialog()
       updateCustomerDialog.value = false;
+      resetSearchCustomer()
+      await searchCustomer()
     } else {
-      errorHandler.showError("更新客户失败,请重试", res);
+      errorHandler.showError("更新客户失败,请重试。可能是邮箱已被注册，或其他参数不正确。", res);
     }
   } catch (error) {
-    errorHandler.showError("更新客户失败,请重试", error);
+    errorHandler.showError("更新客户失败,请重试。可能是邮箱已被注册，或其他参数不正确。", error);
   }
 }
 
@@ -863,6 +848,8 @@ const deleteCustomer = async (row) => {
       console.log("客户数据缓存", customerPagination.value.cachedData.get(customerPagination.value.serverPage));
     } else {
       errorHandler.showError("删除客户失败,请重试", res);
+      resetSearchCustomer()
+      await searchCustomer()
     }
   } catch (error) {
     errorHandler.showError("删除客户失败,请重试", error);
@@ -1011,7 +998,7 @@ const chooseCreateCountry = async (query) => {
       country_name: query,
       country_code: '',
       page_num: 1,
-      page_size: 5
+      page_size: 100
     }
     console.log("搜索国家请求数据", requestData);
     const res = await countryApi.filterCountry(requestData)
@@ -1036,7 +1023,7 @@ const chooseSearchCountry = async (query) => {
       country_name: query,
       country_code: '',
       page_num: 1,
-      page_size: 10
+      page_size: 100
     }
     console.log("搜索国家请求数据", requestData);
     const res = await countryApi.filterCountry(requestData)
@@ -1054,7 +1041,7 @@ const chooseSearchCountry = async (query) => {
 }
 const debouncedSearchCountry = debounce(chooseSearchCountry, 500)
 
-// 搜索客户选择可接受邮件类型
+// 搜索客户选择不可接受邮件类型
 const chooseSearchEmailType = async (query) => {
   try {
     const requestData = {
@@ -1062,17 +1049,17 @@ const chooseSearchEmailType = async (query) => {
       page_num: 1,
       page_size: 30
     }
-    console.log("搜索可接受邮件类型请求数据", requestData);
+    console.log("搜索不可接受邮件类型请求数据", requestData);
     const res = await emailTypeApi.filterEmailType(requestData)
     if (res.code === 200) {
       searchCustomerForm.value.emailTypeOptions = res.data.email_type
-      console.log("搜索客户选择可接受邮件类型响应数据", res);
-      console.log("搜索客户选择可接受邮件类型缓存数据", searchCustomerForm.value.emailTypeOptions);
+      console.log("搜索客户选择不可接受邮件类型响应数据", res);
+      console.log("搜索客户选择不可接受邮件类型缓存数据", searchCustomerForm.value.emailTypeOptions);
     } else {
-      errorHandler.showError("搜索可接受邮件类型失败,请重试", res);
+      errorHandler.showError("搜索不可接受邮件类型失败,请重试", res);
     }
   } catch (error) {
-    errorHandler.showError("搜索可接受邮件类型失败,请重试", error);
+    errorHandler.showError("搜索不可接受邮件类型失败,请重试", error);
   }
 }
 const debouncedSearchEmailType = debounce(chooseSearchEmailType, 500)

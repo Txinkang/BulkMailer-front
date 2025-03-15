@@ -65,7 +65,7 @@ const getChartOptions = (chartKey) => {
       },
       xAxis: {
         type: 'category',
-        data: ["送达率", "退订率", "退信率"],
+        data: ["送达率", "打开率", "退订率", "退信率"],
         axisLabel: {
           interval: 0,  // 强制显示所有标签
           rotate: 0     // 如果需要可以旋转标签
@@ -79,7 +79,7 @@ const getChartOptions = (chartKey) => {
         type: "line",
         data: [
           props.reportData.delivery.rate,
-          // props.reportData.open.openRate,
+          props.reportData.open.rate,
           props.reportData.unsubscribe.rate,
           props.reportData.bounce.rate
         ],
@@ -105,22 +105,22 @@ const getChartOptions = (chartKey) => {
         ]
       }]
     },
-    // openChart: {
-    //   title: { text: "打开统计" },
-    //   tooltip: { trigger: 'axis' },
-    //   xAxis: {
-    //     type: 'category',
-    //     data: ['总数量', '打开数量']
-    //   },
-    //   yAxis: { type: 'value' },
-    //   series: [{
-    //     type: 'bar',
-    //     data: [
-    //       { value: props.reportData.open.total, itemStyle: { color: '#91cc75' } },
-    //       { value: props.reportData.open.openAmount, itemStyle: { color: '#5470c6' } }
-    //     ]
-    //   }]
-    // },
+    openChart: {
+      title: { text: "打开统计" },
+      tooltip: { trigger: 'axis' },
+      xAxis: {
+        type: 'category',
+        data: ['总数量', '打开数量']
+      },
+      yAxis: { type: 'value' },
+      series: [{
+        type: 'bar',
+        data: [
+          { value: props.reportData.open.total, itemStyle: { color: '#91cc75' } },
+          { value: props.reportData.open.openAmount, itemStyle: { color: '#5470c6' } }
+        ]
+      }]
+    },
     unsubscribeChart: {
       title: { text: "退订统计" },
       tooltip: { trigger: 'axis' },
@@ -163,7 +163,7 @@ const initCharts = () => {
   const chartMapping = {
     allChart: allChartRef,
     deliveryChart: deliveryChartRef,
-    // openChart: openChartRef,
+    openChart: openChartRef,
     unsubscribeChart: unsubscribeChartRef,
     bounceChart: bounceChartRef
   }

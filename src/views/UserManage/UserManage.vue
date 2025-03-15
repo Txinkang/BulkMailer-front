@@ -469,7 +469,7 @@ const createUser = async () => {
     createUserFormRef.value.validate( async (valid) => {
       if (valid) {
         const requestData = {
-          user_role: createUserForm.value.user_role,
+          user_role: 4,
           user_name: createUserForm.value.user_name,
           user_account: createUserForm.value.user_account,
           user_password: createUserForm.value.user_password,

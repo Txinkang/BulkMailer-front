@@ -1,5 +1,5 @@
 import request from '../request'
-
+import {testApi} from '../request'
 export const userApi = {
   // 批量导入用户
   importUser(data) {

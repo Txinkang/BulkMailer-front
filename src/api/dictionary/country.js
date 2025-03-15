@@ -1,5 +1,5 @@
 import request from "../request";
-
+import {testApi} from "../request";
 export const countryApi = {
   //导入国家
   importCountry(file) {
@@ -42,7 +42,7 @@ export const countryApi = {
     })
   },
 
-  // 删除国家 
+  // 删除国家
   deleteCountry(data) {
     return request({
       url: '/country/deleteCountry',

@@ -16,7 +16,7 @@ export const emailTypeApi = {
 
   // 搜索邮件类型
   filterEmailType(data) {
-    return testApi({
+    return request({
       url: '/dictionary/filterEmailType',
       method: 'post',
       headers: {

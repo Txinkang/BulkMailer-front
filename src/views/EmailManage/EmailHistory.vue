@@ -11,16 +11,15 @@
               <el-input v-model="searchAllEmailTaskForm.subject" style="width: 200px" placeholder="请搜索主题名称" clearable></el-input>
             </el-form-item>
 
-            <el-form-item>
+            <!-- 僵尸用户的版本，客户端才会搜索发件人 -->
+            <el-form-item v-if="false">
               <el-input v-model="searchAllEmailTaskForm.senderName" style="width: 200px" placeholder="请搜索发件人" clearable></el-input>
             </el-form-item>
 
             <el-form-item>
               <el-select v-model="searchAllEmailTaskForm.taskType" style="width: 200px" placeholder="选择任务类型" clearable>
-                <el-option label="手动发送" :value="1"></el-option>
-                <el-option label="循环发送" :value="2"></el-option>
-                <el-option label="生日发送" :value="3"></el-option>
-                <el-option label="节日发送" :value="4"></el-option>
+                <el-option label="手动发送" :value="emailData.ManualTaskType"></el-option>
+                <el-option label="循环发送" :value="emailData.CircleTaskType"></el-option>
               </el-select>
             </el-form-item>
 
@@ -44,12 +43,12 @@
 
             <el-form-item>
               <el-select v-model="searchAllEmailTaskForm.taskStatus" style="width: 200px" placeholder="选择任务状态" clearable>
-                  <el-option label="发送中" :value="1"></el-option>
-                  <el-option label="发送暂停" :value="2"></el-option>
-                  <el-option label="发送终止" :value="3"></el-option>
-                  <el-option label="发送重置" :value="4"></el-option>
-                  <el-option label="发送失败" :value="5"></el-option>
-                  <el-option label="发送成功" :value="6"></el-option>
+                  <el-option label="发送中" :value="emailData.EmailTaskStatus.SendStart"></el-option>
+                  <el-option label="发送暂停" :value="emailData.EmailTaskStatus.SendPause"></el-option>
+                  <el-option label="发送终止" :value="emailData.EmailTaskStatus.SendStop"></el-option>
+                  <el-option label="发送重置" :value="emailData.EmailTaskStatus.SendReset"></el-option>
+                  <el-option label="发送失败" :value="emailData.EmailTaskStatus.SendError"></el-option>
+                  <el-option label="发送完成" :value="emailData.EmailTaskStatus.SendSuccess"></el-option>
               </el-select>
             </el-form-item>
 
@@ -88,7 +87,7 @@
         <div style="width: 100%;overflow-x: auto">
           <el-table :data="emailTaskCurrentPageData" border style="width: 1000px;margin-bottom: 2em">
             <!-- 主题列 -->
-            <el-table-column label="主题" min-width="120px">
+            <el-table-column label="主题" min-width="120px" show-overflow-tooltip>
               <template #default="{ row }">
                 {{ row.subject }}
               </template>
@@ -125,14 +124,14 @@
             <!-- 开始时间列 -->
             <el-table-column label="开始时间" min-width="200px">
               <template #default="{ row }">
-                {{ row.start_date }}
+                {{ getStartTime(row) }}
               </template>
             </el-table-column>
 
             <!-- 结束时间列 -->
             <el-table-column label="结束时间" min-width="200px">
               <template #default="{ row }">
-                {{ row.end_date }}
+                {{ getEndTime(row) }}
               </template>
             </el-table-column>
 
@@ -164,11 +163,12 @@
               :model="searchEmailDetailForm"
               :rules="searchEmailDetailFormRules"
               ref="searchEmailDetailFormRef">
-              <el-form-item>
+              <!-- 僵尸用户的版本，客户端才会搜索发件人 -->
+              <el-form-item v-if="false">
                 <el-input style="width: 200px;" placeholder="请搜索发件人" clearable v-model="searchEmailDetailForm.senderName" />
               </el-form-item>
 
-              <el-form-item>
+              <el-form-item v-if="false">
                 <el-input style="width: 200px;" placeholder="请搜索发件人邮箱" clearable v-model="searchEmailDetailForm.senderEmail" />
               </el-form-item>
 
@@ -194,8 +194,9 @@
 
               <el-form-item>
                 <el-select style="width: 200px;" placeholder="邮件状态" v-model="searchEmailDetailForm.emailStatus" clearable>
-                  <el-option label="已送达" value="200"></el-option>
-                  <el-option label="未送达" value="500"></el-option>
+                  <el-option label="已送达" :value="statusData.EMAIL_STATUS_SUCCESS"></el-option>
+                  <el-option label="未送达" :value="statusData.EMAIL_STATUS_FAILED"></el-option>
+                  <el-option label="发送错误" :value="statusData.EMAIL_STATUS_BOUNCE"></el-option>
                 </el-select>
               </el-form-item>
 
@@ -232,9 +233,16 @@
           <div style="display: flex;overflow-x: auto">
             <el-table :data="emailDetailCurrentPageData" border style="width: 1200px;margin-bottom: 2em;">
               <!-- 主题列 -->
-              <el-table-column label="主题" min-width="100px">
+              <el-table-column label="主题" min-width="120px" show-overflow-tooltip>
                 <template #default="{ row }">
                   {{ row.subject }}
+                </template>
+              </el-table-column>
+
+              <!-- 任务类型列 -->
+              <el-table-column label="任务类型" min-width="120px">
+                <template #default="{ row }">
+                  {{ getEmailTaskType(row.task_type) }}
                 </template>
               </el-table-column>
 
@@ -244,7 +252,7 @@
                   <span>{{ row.sender_name }}</span>
                 </template>
               </el-table-column>
-              <el-table-column label="发件人邮箱" min-width="200px">
+              <el-table-column label="发件人邮箱" min-width="230px" show-overflow-tooltip>
                 <template #default="{ row }">
                   <span>{{ row.sender_email }}</span>
                 </template>
@@ -256,7 +264,7 @@
                   <span>{{ row.receiver_name }}</span>
                 </template>
               </el-table-column>
-              <el-table-column label="收件人邮箱"  min-width="200px">
+              <el-table-column label="收件人邮箱"  min-width="230px" show-overflow-tooltip>
                 <template #default="{ row }">
                   <span>{{ row.receiver_email }}</span>
                 </template>
@@ -287,13 +295,19 @@
               <!-- 状态列 -->
               <el-table-column label="状态"  min-width="100px">
                 <template #default="{ row }">
-                  <span>{{ row.email_status === statusData.EMAIL_STATUS_SUCCESS ? '已送达' : '未送达' }}</span>
+                  <span v-if="row.email_status === statusData.EMAIL_STATUS_SUCCESS">已送达</span>
+                  <span v-if="row.email_status === statusData.EMAIL_STATUS_FAILED">未送达</span>
+                  <span v-if="row.email_status === statusData.EMAIL_STATUS_BOUNCE">发送错误</span>
                 </template>
               </el-table-column>
-              <el-table-column label="未送达详情"  min-width="100px">
+
+              <!-- 未送达详情列 -->
+              <el-table-column label="未送达详情"  min-width="300px" show-overflow-tooltip>
                 <template #default="{ row }">
-                  <span v-if="row.email_status === statusData.EMAIL_STATUS_SUCCESS">无</span>
-                  <span v-if="row.email_status === statusData.EMAIL_STATUS_FAILED">{{ row.error_msg }}</span>
+                  {{ row.error_msg }}
+                  <!-- <span v-if="row.email_status === statusData.EMAIL_STATUS_SUCCESS">{{ error_msg.EMAIL_STATUS_SUCCESS }}</span>
+                  <span v-if="row.email_status === statusData.EMAIL_STATUS_FAILED">{{ error_msg.EMAIL_STATUS_FAILED }}</span>
+                  <span v-if="row.email_status === statusData.EMAIL_STATUS_BOUNCE">{{ error_msg.EMAIL_STATUS_BOUNCE }}</span> -->
                 </template>
               </el-table-column>
             </el-table>
@@ -326,11 +340,12 @@
               <el-input v-model="undeliveredSearchForm.subject" style="width: 200px" placeholder="请搜索主题名称" clearable></el-input>
             </el-form-item>
 
-            <el-form-item>
+            <!-- 僵尸用户的版本，客户端才会搜索发件人 -->
+            <el-form-item v-if="false">
               <el-input v-model="undeliveredSearchForm.sender_name" style="width: 200px" placeholder="请搜索发件人" clearable></el-input>
             </el-form-item>
 
-            <el-form-item>
+            <el-form-item v-if="false">
               <el-input v-model="undeliveredSearchForm.sender_email" style="width: 200px" placeholder="请搜索发件人邮箱" clearable></el-input>
             </el-form-item>
 
@@ -344,18 +359,16 @@
 
             <el-form-item>
               <el-select v-model="undeliveredSearchForm.receiver_level" style="width: 200px" placeholder="选择收件人等级">
-                <el-option label="初级" value="1"></el-option>
-                <el-option label="中级" value="2"></el-option>
-                <el-option label="高级" value="3"></el-option>
+                <el-option label="初级" :value="1"></el-option>
+                <el-option label="中级" :value="2"></el-option>
+                <el-option label="高级" :value="3"></el-option>
               </el-select>
             </el-form-item>
 
             <el-form-item>
               <el-select v-model="undeliveredSearchForm.task_type" style="width: 200px" placeholder="选择任务类型">
-                <el-option label="手动发送" value="1"></el-option>
-                <el-option label="循环发送" value="2"></el-option>
-                <el-option label="生日发送" value="3"></el-option>
-                <el-option label="节日发送" value="4"></el-option>
+                <el-option label="手动发送" :value="emailData.ManualTaskType"></el-option>
+                <el-option label="循环发送" :value="emailData.CircleTaskType"></el-option>
               </el-select>
             </el-form-item>
 
@@ -379,9 +392,9 @@
 
             <el-form-item>
               <el-select v-model="undeliveredSearchForm.resend_status" style="width: 200px" placeholder="选择重发状态">
-                <el-option label="未重发" :value="0"></el-option>
-                <el-option label="重发成功" :value="1"></el-option>
-                <el-option label="重发失败" :value="2"></el-option>
+                <el-option label="未重发" value="0"></el-option>
+                <el-option label="重发成功" value="1"></el-option>
+                <el-option label="重发失败" value="2"></el-option>
               </el-select>
             </el-form-item>
 
@@ -418,7 +431,7 @@
 
         <!-- 表格 -->
         <div style="width: 100%;display: flex;overflow-x: auto">
-          <el-table :data="undeliveredTableData" border style="width: 1000px;margin-bottom: 2em">
+          <el-table :data="undeliveredCurrentPageData" border style="width: 1000px;margin-bottom: 2em">
             <!-- 主题列 -->
             <el-table-column label="主题" min-width="200" show-overflow-tooltip>
               <template #default="{ row }">
@@ -429,94 +442,94 @@
             <!-- 任务类型列 -->
             <el-table-column label="任务类型" min-width="200">
               <template #default="{ row }">
-                {{ row.taskType }}
+                {{ getEmailTaskType(row.task_type) }}
               </template>
             </el-table-column>
 
             <!-- 邮件类型列 -->
             <el-table-column label="邮件类型" min-width="200" show-overflow-tooltip>
               <template #default="{ row }">
-                {{ row.emailType }}
+                {{ row.email_type_name }}
               </template>
             </el-table-column>
 
             <!-- 发件人列 -->
             <el-table-column label="发件人" min-width="100px">
               <template #default="{ row }">
-                <span>{{ row.senders }}</span>
+                <span>{{ row.sender_name }}</span>
               </template>
             </el-table-column>
-            <el-table-column label="发件人邮箱" min-width="200px" show-overflow-tooltip>
+            <el-table-column label="发件人邮箱" min-width="230px" show-overflow-tooltip>
               <template #default="{ row }">
-                <span>{{ row.sendersEmail }}</span>
+                <span>{{ row.sender_email }}</span>
               </template>
             </el-table-column>
 
             <!-- 收件人列 -->
             <el-table-column label="收件人"  min-width="100px">
               <template #default="{ row }">
-                <span>{{ row.receivers }}</span>
+                <span>{{ row.receiver_name }}</span>
               </template>
             </el-table-column>
-            <el-table-column label="收件人邮箱"  min-width="200px" show-overflow-tooltip>
+            <el-table-column label="收件人邮箱"  min-width="230px" show-overflow-tooltip>
               <template #default="{ row }">
-                <span>{{ row.receiversEmail }}</span>
+                <span>{{ row.receiver_email }}</span>
               </template>
             </el-table-column>
             <el-table-column label="收件人等级"  min-width="100px">
               <template #default="{ row }">
-                <span>{{ row.receiversGrade }}</span>
+                <span>{{ getReceiverLevel(row.receiver_level) }}</span>
               </template>
             </el-table-column>
             <el-table-column label="收件人生日"  min-width="200px">
               <template #default="{ row }">
-                <span>{{ row.receiversBirth }}</span>
+                <span>{{ row.receiver_birth }}</span>
               </template>
             </el-table-column>
 
             <!-- 时间列 -->
             <el-table-column label="发送时间" min-width="200">
               <template #default="{ row }">
-                {{ row.startDate }}
+                {{ row.start_date }}
               </template>
             </el-table-column>
             <el-table-column label="失败时间" min-width="200">
               <template #default="{ row }">
-                {{ row.endDate }}
+                {{ row.end_date }}
               </template>
             </el-table-column>
 
             <!-- 未送达详情列 -->
             <el-table-column label="未送达详情" min-width="200" show-overflow-tooltip>
               <template #default="{ row }">
-                {{ row.undeliveredDetails }}
+                {{ row.error_msg }}
               </template>
             </el-table-column>
 
             <!-- 重发状态列 -->
             <el-table-column label="重发状态" min-width="200">
               <template #default="{ row }">
-                {{ row.resendStatus }}
+                {{ getResendStatus(row.resend_status) }}
               </template>
             </el-table-column>
 
             <!-- 重发失败详情列 -->
             <el-table-column label="重发失败详情" min-width="200" show-overflow-tooltip>
               <template #default="{ row }">
-                {{ row.resendMsg }}
+                {{ row.resend_msg }}
               </template>
             </el-table-column>
             <!-- 重发开始时间列 -->
             <el-table-column label="重发开始时间" min-width="200">
               <template #default="{ row }">
-                {{ row.resendStartDate }}
+                {{ row.resend_start_date === 0 ? '无' : getDateByTimestamp(row.resend_start_date) }}
               </template>
             </el-table-column>
 
             <!-- 重发结束时间列 -->
             <el-table-column label="重发结束时间" min-width="200">
               <template #default="{ row }">
-                {{ row.resendEndDate }}
+                {{ row.resend_end_date === 0 ? '无' : getDateByTimestamp(row.resend_end_date) }}
               </template>
             </el-table-column>
 
@@ -690,6 +703,11 @@ const searchEmailDetailFormRules = {
     }
   ]
 }
+const error_msg = ref({
+  EMAIL_STATUS_SUCCESS: '无',
+  EMAIL_STATUS_FAILED: '未送达',
+  EMAIL_STATUS_BOUNCE: '1、邮箱发送到达上限。2、发件人邮箱或授权码填写错误。3、收件人邮箱填写错误',
+})
 // 未送达邮件搜索条件
 const undeliveredSearchForm = ref({
   subject: '', // 主题名称
@@ -792,15 +810,6 @@ const undeliveredSearchFormRules = {
   ],
 }
 
-// 未送达邮件表格数据
-const undeliveredTableData = [
-  {subject: "商品促销", taskType:"手动发送", emailType: "商品促销", senders: "张三", sendersEmail: "sender@gmail.com", receivers: "赵五", receiversEmail: "receiver@gmail.com", receiversGrade: "高级", receiversBirth: "2023-12-01 00:00:00", allStatus: "发送中", status:"已送达", startDate: "2023-12-01 00:00:00", endDate: "2023-12-01 23:59:59", resendStartDate: "2023-12-02 10:00:00", resendEndDate: "2023-12-02 10:30:00", undeliveredDetails:"网络波动", resendStatus: "未重发", resendMsg: "网络连接超时"},
-  {subject: "商品促销", taskType:"手动发送", emailType: "商品促销", senders: "张三", sendersEmail: "sender@gmail.com", receivers: "赵五", receiversEmail: "receiver@gmail.com", receiversGrade: "高级", receiversBirth: "2023-12-01 00:00:00", allStatus: "发送中", status:"已送达", startDate: "2023-12-01 00:00:00", endDate: "2023-12-01 23:59:59", resendStartDate: "2023-12-02 11:00:00", resendEndDate: "2023-12-02 11:30:00", undeliveredDetails:"网络波动", resendStatus: "发送中", resendMsg: "网络连接超时..."},
-  {subject: "商品促销", taskType:"手动发送", emailType: "商品促销", senders: "张三", sendersEmail: "sender@gmail.com", receivers: "赵五", receiversEmail: "receiver@gmail.com", receiversGrade: "高级", receiversBirth: "2023-12-01 00:00:00", allStatus: "发送中", status:"已送达", startDate: "2023-12-01 00:00:00", endDate: "2023-12-01 23:59:59", resendStartDate: "2023-12-02 12:00:00", resendEndDate: "2023-12-02 12:30:00", undeliveredDetails:"网络波动", resendStatus: "重发成功", resendMsg: "网络连接超时"},
-  {subject: "商品促销", taskType:"手动发送", emailType: "商品促销", senders: "张三", sendersEmail: "sender@gmail.com", receivers: "赵五", receiversEmail: "receiver@gmail.com", receiversGrade: "高级", receiversBirth: "2023-12-01 00:00:00", allStatus: "发送中", status:"已送达", startDate: "2023-12-01 00:00:00", endDate: "2023-12-01 23:59:59", resendStartDate: "2023-12-02 13:00:00", resendEndDate: "2023-12-02 13:30:00", undeliveredDetails:"网络波动", resendStatus: "重发失败", resendMsg: "网络连接超时"},
-  {subject: "商品促销", taskType:"手动发送", emailType: "商品促销", senders: "张三", sendersEmail: "sender@gmail.com", receivers: "赵五", receiversEmail: "receiver@gmail.com", receiversGrade: "高级", receiversBirth: "2023-12-01 00:00:00", allStatus: "发送中", status:"已送达", startDate: "2023-12-01 00:00:00", endDate: "2023-12-01 23:59:59", resendStartDate: "2023-12-02 14:00:00", resendEndDate: "2023-12-02 14:30:00", undeliveredDetails:"网络波动", resendStatus: "未重发", resendMsg: "网络连接超时"},
-
-];
 //================================功能========================================
 // ==============邮件任务==============
 // 搜索邮件任务点击事件
@@ -944,15 +953,15 @@ const searchUndelivered = async () => {
       return
     }
     const requestData = {
-      subject: undeliveredSearchForm.value.subject,
-      sender_name: undeliveredSearchForm.value.sender_name,
-      sender_email: undeliveredSearchForm.value.sender_email,
-      receiver_name: undeliveredSearchForm.value.receiver_name,
-      receiver_email: undeliveredSearchForm.value.receiver_email,
+      subject: undeliveredSearchForm.value.subject === '' ? null : undeliveredSearchForm.value.subject,
+      sender_name: undeliveredSearchForm.value.sender_name === '' ? null : undeliveredSearchForm.value.sender_name,
+      sender_email: undeliveredSearchForm.value.sender_email === '' ? null : undeliveredSearchForm.value.sender_email,
+      receiver_name: undeliveredSearchForm.value.receiver_name === '' ? null : undeliveredSearchForm.value.receiver_name,
+      receiver_email: undeliveredSearchForm.value.receiver_email === '' ? null : undeliveredSearchForm.value.receiver_email,
       receiver_level: undeliveredSearchForm.value.receiver_level ? Number(undeliveredSearchForm.value.receiver_level) : null,
       receiver_birth: undeliveredSearchForm.value.receiver_birth ? getIsoDate(undeliveredSearchForm.value.receiver_birth) : null,
       task_type: undeliveredSearchForm.value.task_type ? Number(undeliveredSearchForm.value.task_type) : null,
-      email_type_id: undeliveredSearchForm.value.email_type_id,
+      email_type_id: undeliveredSearchForm.value.email_type_id === '' ? null : undeliveredSearchForm.value.email_type_id,
       start_date: undeliveredSearchForm.value.start_date ? getStartOfDay(undeliveredSearchForm.value.start_date) : null,
       end_date: undeliveredSearchForm.value.end_date ? getEndOfDay(undeliveredSearchForm.value.end_date) : null,
       resend_status: undeliveredSearchForm.value.resend_status ? Number(undeliveredSearchForm.value.resend_status) : null,
@@ -1001,7 +1010,7 @@ const resetUndelivered = () => {
 const resendUndelivered = async (row) => {
   try {
     const requestData = {
-      emailId: row.email_id,
+      email_id: row.emailId,
     }
     console.log("重发未送达邮件请求数据", requestData);
     const res = await undeliveredEmailApi.sendUndeliveredEmail(requestData)
@@ -1145,8 +1154,8 @@ const openEmailDetails = async (row) => {
     clearEmailDetailCache()
     const requestData = {
       email_task_id: row.task_id,
-      page_num: 1,
-      page_size: 5
+      page_num: emailDetailPagination.value.serverPage,
+      page_size: emailDetailPagination.value.serverPageSize
     }
     console.log("第一次搜索邮件详情请求数据", requestData);
     const res = await emailApi.filterEmail(requestData)
@@ -1258,7 +1267,7 @@ const getEmailTaskStatus = (status) => {
   }else if(status === emailData.EmailTaskStatus.SendError){
     return '发送失败'
   }else if(status === emailData.EmailTaskStatus.SendSuccess){
-    return '发送成功'
+    return '发送完成'
   }
 }
 // 获取收件人等级
@@ -1273,6 +1282,46 @@ const getReceiverLevel = (level) => {
     return "高级"
   }
 }
+
+// 获取重发状态
+const getResendStatus = (status) => {
+  if(status === 0){
+    return '未重发'
+  }else if(status === 1){
+    return '重发成功'
+  }else if(status === 2){
+    return '重发失败'
+  }
+}
+// 获取开始时间显示
+const getStartTime = (row) => {
+  if(row.start_date === '1970-01-01 08:00:00'){
+    return '未开始'
+  }
+  return row.start_date
+}
+// 获取结束时间显示
+const getEndTime = (row) => {
+  if(row.task_status === emailData.EmailTaskStatus.SendError){
+    return '发送失败'
+  }
+  if(row.end_date === '1970-01-01 08:00:00'){
+    return '未结束'
+  }
+  return row.end_date
+}
+// 通过时间戳获取日期
+const getDateByTimestamp = (timestamp) => {
+  if (!timestamp) return null
+  const date = new Date(timestamp * 1000)
+  return date.getFullYear() + '-' +
+         String(date.getMonth() + 1).padStart(2, '0') + '-' +
+         String(date.getDate()).padStart(2, '0') + ' ' +
+         String(date.getHours()).padStart(2, '0') + ':' +
+         String(date.getMinutes()).padStart(2, '0') + ':' +
+         String(date.getSeconds()).padStart(2, '0')
+}
+
 </script>
 <style scoped>
 .mail-container {

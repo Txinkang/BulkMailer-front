@@ -67,6 +67,14 @@
         </el-form-item>
 
         <el-form-item>
+          <el-select v-model="searchReceiverForm.is_user" placeholder="请选择所属用户" clearable style="width: 200px;">
+            <el-option label="所有" />
+            <el-option label="公司" value="0" />
+            <el-option label="个人" value="1" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item>
           <el-button type="primary" @click="handleSearchClick">搜索</el-button>
           <el-button type="primary" @click="handleReset">
             <el-icon><Refresh /></el-icon>
@@ -81,11 +89,11 @@
       <el-checkbox-group v-model="selectedReceiverIds">
         <el-checkbox
           v-for="item in filterReceiverCurrentPageData"
-          :key="item.id"
-          :label="item.name"
-          :value="item.id"
+          :key="item.receiver_id"
+          :label="item.receiver_name"
+          :value="item.receiver_id"
         >
-          {{ item.name }}
+          {{ item.receiver_name }}
         </el-checkbox>
       </el-checkbox-group>
 
@@ -118,6 +126,7 @@ import { sendEmailApi } from '@/api/sendEmail/sendEmail.js'
 import { errorHandler } from '@/utils/errorHandler.js'
 import { debounce } from 'lodash'
 import { ElMessage } from 'element-plus'
+import SmartPagination from '@/components/SmartPagination.vue'
 // =======================父组件数据======================
 const props = defineProps({
   modelValue: {
@@ -146,7 +155,8 @@ const searchReceiverForm = ref({
   country_ids: [],
   country_options: [],
   trade_type: null,
-  receiver_level: null
+  receiver_level: null,
+  is_user: null
 })
 const selectedReceiverKey = ref(null)
 const selectedReceiverTotal = ref(0)
@@ -164,11 +174,12 @@ const searchReceiver = async () => {
   try {
     if(isSupplier.value){
       const requestData = {
-        commodity_name: searchReceiverForm.value.commodity_name,
-        area_ids: searchReceiverForm.value.area_ids,
-        country_ids: searchReceiverForm.value.country_ids,
+        commodity_name: searchReceiverForm.value.commodity_name === '' ? null : searchReceiverForm.value.commodity_name,
+        area_id: searchReceiverForm.value.area_ids.length === 0 ? [''] : searchReceiverForm.value.area_ids,
+        supplier_country_id: searchReceiverForm.value.country_ids.length === 0 ? null : searchReceiverForm.value.country_ids,
         trade_type: searchReceiverForm.value.trade_type ? Number(searchReceiverForm.value.trade_type) : null,
-        receiver_level: searchReceiverForm.value.receiver_level ? Number(searchReceiverForm.value.receiver_level) : null,
+        supplier_level: searchReceiverForm.value.receiver_level ? Number(searchReceiverForm.value.receiver_level) : null,
+        is_user: searchReceiverForm.value.is_user ? Number(searchReceiverForm.value.is_user) : null,
         page_num: filterReceiverPagination.value.serverPage,
         page_size: filterReceiverPagination.value.serverPageSize
       }
@@ -176,7 +187,7 @@ const searchReceiver = async () => {
       const res = await sendEmailApi.getSupplier(requestData)
       if (res.code === 200) {
         ElMessage.success("搜索供应商成功");
-        console.log("搜索供应商成功", res);
+        console.log("搜索供应商响应数据", res);
         filterReceiverPagination.value.totalItems = res.data.total_items
         filterReceiverPagination.value.cachedData.set(filterReceiverPagination.value.serverPage, res.data.receiver)
       } else {
@@ -184,11 +195,12 @@ const searchReceiver = async () => {
       }
     }else{
       const requestData = {
-        commodity_name: searchReceiverForm.value.commodity_name,
-        area_ids: searchReceiverForm.value.area_ids,
-        country_ids: searchReceiverForm.value.country_ids,
+        commodity_name: searchReceiverForm.value.commodity_name === '' ? null : searchReceiverForm.value.commodity_name,
+        area_id: searchReceiverForm.value.area_ids.length === 0 ? null : searchReceiverForm.value.area_ids,
+        customer_country_id: searchReceiverForm.value.country_ids.length === 0 ? null : searchReceiverForm.value.country_ids,
         trade_type: searchReceiverForm.value.trade_type ? Number(searchReceiverForm.value.trade_type) : null,
-        receiver_level: searchReceiverForm.value.receiver_level ? Number(searchReceiverForm.value.receiver_level) : null,
+        customer_level: searchReceiverForm.value.receiver_level ? Number(searchReceiverForm.value.receiver_level) : null,
+        is_user: searchReceiverForm.value.is_user ? Number(searchReceiverForm.value.is_user) : null,
         page_num: filterReceiverPagination.value.serverPage,
         page_size: filterReceiverPagination.value.serverPageSize
       }
@@ -196,7 +208,7 @@ const searchReceiver = async () => {
       const res = await sendEmailApi.getCustomer(requestData)
       if (res.code === 200) {
         ElMessage.success("搜索客户成功");
-        console.log("搜索客户成功", res);
+        console.log("搜索客户响应数据", res);
         filterReceiverPagination.value.totalItems = res.data.total_items
         filterReceiverPagination.value.cachedData.set(filterReceiverPagination.value.serverPage, res.data.receiver)
       } else {
@@ -213,16 +225,17 @@ const handleSelectAll = async () => {
     if(isSupplier.value){
       const requestData = {
         commodity_name: searchReceiverForm.value.commodity_name,
-        area_ids: searchReceiverForm.value.area_ids,
-        country_ids: searchReceiverForm.value.country_ids,
+        area_id: searchReceiverForm.value.area_ids,
+        supplier_country_id: searchReceiverForm.value.country_ids,
         trade_type: searchReceiverForm.value.trade_type ? Number(searchReceiverForm.value.trade_type) : null,
-        receiver_level: searchReceiverForm.value.receiver_level ? Number(searchReceiverForm.value.receiver_level) : null,
+        supplier_level: searchReceiverForm.value.receiver_level ? Number(searchReceiverForm.value.receiver_level) : null,
+        is_user: searchReceiverForm.value.is_user ? Number(searchReceiverForm.value.is_user) : null,
       }
     console.log("全选供应商请求数据", requestData);
     const res = await sendEmailApi.selectAllSupplier(requestData)
     if (res.code === 200) {
       ElMessage.success("全选成功");
-      console.log("全选成功", res);
+      console.log("全选供应商响应数据", res);
       selectedReceiverKey.value = res.data.receiver_key
       selectedReceiverTotal.value = res.data.total_items
       selectedReceiverIds.value = []
@@ -233,16 +246,17 @@ const handleSelectAll = async () => {
   }else{
     const requestData = {
       commodity_name: searchReceiverForm.value.commodity_name,
-      area_ids: searchReceiverForm.value.area_ids,
-      country_ids: searchReceiverForm.value.country_ids,
+      area_id: searchReceiverForm.value.area_ids,
+      customer_country_id: searchReceiverForm.value.country_ids,
       trade_type: searchReceiverForm.value.trade_type ? Number(searchReceiverForm.value.trade_type) : null,
-      receiver_level: searchReceiverForm.value.receiver_level ? Number(searchReceiverForm.value.receiver_level) : null,
+      customer_level: searchReceiverForm.value.receiver_level ? Number(searchReceiverForm.value.receiver_level) : null,
+      is_user: searchReceiverForm.value.is_user ? Number(searchReceiverForm.value.is_user) : null,
     }
     console.log("全选客户请求数据", requestData);
     const res = await sendEmailApi.selectAllCustomer(requestData)
     if (res.code === 200) {
       ElMessage.success("全选成功");
-        console.log("全选成功", res);
+        console.log("全选客户响应数据", res);
         selectedReceiverKey.value = res.data.receiver_key
         selectedReceiverTotal.value = res.data.total_items
         selectedReceiverIds.value = []
@@ -255,7 +269,7 @@ const handleSelectAll = async () => {
     errorHandler.showError("全选失败,请重试", error);
   }
 }
-// 确认选择返回数据
+// 单独勾选返回数据
 const handleConfirm = () => {
   try {
     // 根据接收者类型返回不同格式的数据
@@ -291,13 +305,14 @@ const handleSelectAllConfirm = () => {
 const handleReset = () => {
   clearReceiverCache()
   searchReceiverForm.value = {
-    commodity_name: '',
+    commodity_name: null,
     area_ids: [],
     area_options: [],
     country_ids: [],
     country_options: [],
-    trade_type: '',
-    receiver_level: ''
+    trade_type: null,
+    receiver_level: null,
+    is_user: null
   }
   selectedReceiverIds.value = []
   selectedReceiverKey.value = null
@@ -314,7 +329,7 @@ const filterReceiverPagination = ref({
   currentPage: 1, // 当前页
   serverPage: 1, // 服务器页
   displayPageSize: 5, // 每页显示条数
-  serverPageSize: 10, // 每页服务器条数
+  serverPageSize: 20, // 每页服务器条数
   totalItems: 0, // 总条数
   cachedData: new Map() // 缓存数据
 });

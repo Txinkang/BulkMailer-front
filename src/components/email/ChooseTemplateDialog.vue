@@ -15,12 +15,14 @@
       </el-form-item>
 
       <el-form-item>
-        <el-input
-          style="width:200px;"
+        <el-select
           v-model="searchTemplateForm.belong_user_name"
-          placeholder="请搜索所属用户"
+          style="width: 200px;"
+          placeholder="请选择所属用户"
           clearable
-        />
+        >
+          <el-option v-for="user in templateBelongUserList" :key="user.id" :label="user.name" :value="user.value" />
+        </el-select>
       </el-form-item>
 
       <!-- 类型  -->
@@ -90,9 +92,10 @@ import { debounce } from "lodash";
 import { emailTypeApi } from "@/api/dictionary/emailType.js";
 import { errorHandler } from "@/utils/errorHandler.js";
 import { templateApi } from "@/api/email/template/template.js";
+import { sendEmailApi } from "@/api/sendEmail/sendEmail.js";
 import { ElMessage } from "element-plus";
 import SmartPagination from "@/components/SmartPagination.vue";
-
+import UserConstantData from "@/constants/UserConstantData.js";
 // 接收父组件的控制值
 const props = defineProps({
   modelValue: {
@@ -113,6 +116,7 @@ const searchTemplateForm = ref({
   template_type_id: '',
   templateTypeOptions: []
 })
+const templateBelongUserList = ref([{id:1,name:'无',value:''},{id:2,name:'公司',value:UserConstantData.companyName},{id:3,name:'个人',value:localStorage.getItem('user_name')}]);
 
 const handleSearchClick = async () => {
   clearTemplateCache()
@@ -124,6 +128,7 @@ const searchTemplate = async () => {
       template_name: searchTemplateForm.value.template_name,
       template_type_id: searchTemplateForm.value.template_type_id,
       belong_user_name: searchTemplateForm.value.belong_user_name,
+      status: 0,
       page_num: templatePagination.value.currentPage,
       page_size: templatePagination.value.serverPageSize
     }

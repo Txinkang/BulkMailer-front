@@ -1,4 +1,5 @@
 import request from "../request";
+import {testApi} from "../request";
 
 // 获取区域列表
 export const areaApi = {

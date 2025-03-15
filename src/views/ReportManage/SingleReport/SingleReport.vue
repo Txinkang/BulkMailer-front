@@ -1,22 +1,20 @@
 <template>
   <div class="mail-container">
     <!-- 筛选条件 -->
-    <div style="display: flex;flex-flow: row wrap;gap: 10px;">
-      <el-form style="display: flex;flex-flow: row wrap;gap: 10px;">
+    <div>
+      <el-form style="display: flex;flex-flow: row wrap;gap: 10px;" :model="searchTaskForm" :rules="searchTaskFormRules" ref="searchTaskFormRef">
         <el-form-item>
-          <el-input style="width: 200px" placeholder="请搜索主题名称" v-model="searchTaskForm.subject" clearable></el-input>
+          <el-input v-model="searchTaskForm.subject" style="width: 200px" placeholder="请搜索主题名称" clearable></el-input>
+        </el-form-item>
+
+        <el-form-item v-if="false">
+          <el-input v-model="searchTaskForm.sender_name" style="width: 200px" placeholder="请搜索发件人" clearable></el-input>
         </el-form-item>
 
         <el-form-item>
-          <el-input style="width: 200px" placeholder="请搜索发件人" v-model="searchTaskForm.sender_name" clearable></el-input>
-        </el-form-item>
-
-        <el-form-item>
-          <el-select style="width: 200px" placeholder="选择任务类型" v-model="searchTaskForm.task_type" clearable>
-            <el-option label="手动发送" value="1"></el-option>
-            <el-option label="循环发送" value="2"></el-option>
-            <el-option label="生日发送" value="3"></el-option>
-            <el-option label="节日发送" value="4"></el-option>
+          <el-select v-model="searchTaskForm.task_type" style="width: 200px" placeholder="选择任务类型" clearable>
+            <el-option label="手动发送" :value="emailData.ManualTaskType"></el-option>
+            <el-option label="循环发送" :value="emailData.CircleTaskType"></el-option>
           </el-select>
         </el-form-item>
 
@@ -40,20 +38,31 @@
 
         <el-form-item>
           <el-select v-model="searchTaskForm.task_status" style="width: 200px" placeholder="选择任务状态" clearable>
-            <el-option label="发送中" :value="emailData.EmailTaskStatus.SendStart"></el-option>
-            <el-option label="发送暂停" :value="emailData.EmailTaskStatus.SendPause"></el-option>
-            <el-option label="发送终止" :value="emailData.EmailTaskStatus.SendStop"></el-option>
-            <el-option label="发送成功" :value="emailData.EmailTaskStatus.SendSuccess"></el-option>
-            <el-option label="发送失败" :value="emailData.EmailTaskStatus.SendError"></el-option>
+              <el-option label="发送中" :value="emailData.EmailTaskStatus.SendStart"></el-option>
+              <el-option label="发送暂停" :value="emailData.EmailTaskStatus.SendPause"></el-option>
+              <el-option label="发送终止" :value="emailData.EmailTaskStatus.SendStop"></el-option>
+              <el-option label="发送重置" :value="emailData.EmailTaskStatus.SendReset"></el-option>
+              <el-option label="发送失败" :value="emailData.EmailTaskStatus.SendError"></el-option>
+              <el-option label="发送完成" :value="emailData.EmailTaskStatus.SendSuccess"></el-option>
           </el-select>
         </el-form-item>
 
-        <el-form-item>
+        <el-form-item prop="start_date">
           <el-date-picker
             style="width: 200px"
             v-model="searchTaskForm.start_date"
             type="date"
-            placeholder="发送时间"
+            placeholder="开始时间"
+            clearable
+          />
+        </el-form-item>
+
+        <el-form-item prop="end_date">
+          <el-date-picker
+            style="width: 200px"
+            v-model="searchTaskForm.end_date"
+            type="date"
+            placeholder="结束时间"
             clearable
           />
         </el-form-item>
@@ -71,51 +80,58 @@
 
     <!-- 表格 -->
     <div style="width: 100%">
-      <el-table :data="emailTaskCurrentPageData" border style="width: 100%;margin-bottom: 2em">
+      <el-table :data="emailTaskCurrentPageData" border style="width: 1000px;margin-bottom: 2em">
         <!-- 主题列 -->
-        <el-table-column label="主题">
+        <el-table-column label="主题" min-width="120px">
           <template #default="{ row }">
             {{ row.subject }}
           </template>
         </el-table-column>
 
         <!-- 发件人列 -->
-        <el-table-column label="发件人">
+        <el-table-column label="发件人" min-width="120px">
           <template #default="{ row }">
             {{ row.sender_name }}
           </template>
         </el-table-column>
 
         <!-- 任务类型列 -->
-        <el-table-column label="任务类型">
+        <el-table-column label="任务类型" min-width="120px">
           <template #default="{ row }">
-            {{ row.taskType }}
+            {{ getEmailTaskType(row.taskType) }}
           </template>
         </el-table-column>
 
         <!-- 邮件类型列 -->
-        <el-table-column label="邮件类型">
+        <el-table-column label="邮件类型" min-width="120px">
           <template #default="{ row }">
-            {{ row.email_type_name }}
+            {{ row.taskType === 4 ? '' : row.email_type_name }}
           </template>
         </el-table-column>
 
         <!-- 状态列 -->
-        <el-table-column label="状态">
+        <el-table-column label="状态" min-width="120px">
           <template #default="{ row }">
-            {{ taskStatusChinese(row.task_status) }}
+            {{ getEmailTaskStatus(row.task_status) }}
           </template>
         </el-table-column>
 
-        <!-- 时间列 -->
-        <el-table-column label="时间">
+        <!-- 开始时间列 -->
+        <el-table-column label="开始时间" min-width="200px">
           <template #default="{ row }">
-            {{ row.start_date }}
+            {{ getStartTime(row) }}
+          </template>
+        </el-table-column>
+
+        <!-- 结束时间列 -->
+        <el-table-column label="结束时间" min-width="200px">
+          <template #default="{ row }">
+            {{ getEndTime(row) }}
           </template>
         </el-table-column>
 
         <!-- 报表列 -->
-        <el-table-column label="查看报表" >
+        <el-table-column label="查看报表" min-width="150px">
           <template #default="{ row }">
             <el-button type="primary" @click="checkReport(row)">查看任务报表</el-button>
           </template>
@@ -152,19 +168,64 @@ import emailData from "@/constants/EmailConstantData.js";
 const searchTaskForm = ref({
   subject: null,
   sender_name: null,
+  sender_email: null,
   task_type: null,
   email_type_id: null,
   emailTypeOptions: [],
   task_status: null,
   start_date: null,
+  end_date: null,
 })
+const searchTaskFormRef = ref(null)
+const searchTaskFormRules = {
+  start_date: [
+    {
+      validator: (rule, value, callback) => {
+        // 如果两个都没选，通过验证
+        if (!value && !searchTaskForm.value.end_date) {
+          callback()
+        }
+        // 如果只选了一个，报错
+        else if ((value && !searchTaskForm.value.end_date) ||
+                 (!value && searchTaskForm.value.end_date)) {
+          callback(new Error('请同时选择开始和结束时间'))
+        }
+        // 两个都选了，通过验证
+        else {
+          callback()
+        }
+      },
+      trigger: 'change'
+    }
+  ],
+  end_date: [
+    {
+      validator: (rule, value, callback) => {
+        // 如果两个都没选，通过验证
+        if (!value && !searchTaskForm.value.start_date) {
+          callback()
+        }
+        // 如果只选了一个，报错
+        else if ((value && !searchTaskForm.value.start_date) ||
+                 (!value && searchTaskForm.value.start_date)) {
+          callback(new Error('请同时选择开始和结束时间'))
+        }
+        // 两个都选了，通过验证
+        else {
+          callback()
+        }
+      },
+      trigger: 'change'
+    }
+  ]
+}
 
 //================================分页========================================
 const emailTaskPagination = ref({
   currentPage: 1, // 当前页
   serverPage: 1, // 服务器页
-  displayPageSize: 2, // 每页显示条数
-  serverPageSize: 4, // 每页服务器条数
+  displayPageSize: 5, // 每页显示条数
+  serverPageSize: 15, // 每页服务器条数
   totalItems: 0, // 总条数
   cachedData: new Map() // 缓存数据
 });
@@ -204,16 +265,24 @@ const searchTaskClick = async () => {
 }
 const searchEmailTask = async () => {
   try {
+    try {
+      await searchTaskFormRef.value?.validate()
+    } catch (error) {
+      ElMessage.warning("请正确选择开始、结束时间")
+      console.log("请正确选择开始、结束时间：", error);
+      return
+    }
     const requestData = {
       subject: searchTaskForm.value.subject === '' ? null : searchTaskForm.value.subject,
       sender_name: searchTaskForm.value.sender_name === '' ? null : searchTaskForm.value.sender_name,
-      task_type: searchTaskForm.value.task_type ? Number(searchTaskForm.value.task_type) : null,
+      sender_email: searchTaskForm.value.sender_email === '' ? null : searchTaskForm.value.sender_email,
       email_type_id: searchTaskForm.value.email_type_id === '' ? null : searchTaskForm.value.email_type_id,
-      task_status: searchTaskForm.value.task_status ? Number(searchTaskForm.value.task_status) : null,
       start_date: searchTaskForm.value.start_date ? getStartOfDay(searchTaskForm.value.start_date) : null,
-      end_date: searchTaskForm.value.start_date ? getEndOfDay(searchTaskForm.value.start_date) : null,
+      end_date: searchTaskForm.value.end_date ? getEndOfDay(searchTaskForm.value.end_date) : null,
+      task_type: searchTaskForm.value.task_type ? Number(searchTaskForm.value.task_type) : null,
+      task_status: searchTaskForm.value.task_status ? Number(searchTaskForm.value.task_status) : null,
       page_num: emailTaskPagination.value.serverPage,
-      page_size: emailTaskPagination.value.serverPageSize,
+      page_size: emailTaskPagination.value.serverPageSize
     }
     console.log("搜索单任务报表邮件任务请求数据", requestData);
     const res = await emailApi.filterTask(requestData)
@@ -232,10 +301,12 @@ const searchEmailTask = async () => {
 const resetTask = () => {
   searchTaskForm.value.subject = null
   searchTaskForm.value.sender_name = null
+  searchTaskForm.value.sender_email = null
   searchTaskForm.value.task_type = null
   searchTaskForm.value.email_type_id = null
   searchTaskForm.value.task_status = null
   searchTaskForm.value.start_date = null
+  searchTaskForm.value.end_date = null
   clearEmailTaskCache()
   console.log("重置邮件任务");
 }
@@ -297,26 +368,42 @@ const getEndOfDay = (date) => {
   if (!date) return null
   return Math.floor(new Date(new Date(date).setHours(23, 59, 59, 999)).getTime() / 1000)
 }
-// 任务状态中文显示
-const taskStatusChinese = (status) => {
-  if(status === 1){
-    return "发送中"
+// 获取邮件任务类型
+const getEmailTaskType = (type) => {
+  return type === emailData.ManualTaskType ? '手动发送' : type === emailData.CircleTaskType ? '循环发送' : type === emailData.BirthTaskType ? '生日发送' : type === emailData.FestivalTaskType ? '节日发送' : ''
+}
+// 获取邮件任务状态
+const getEmailTaskStatus = (status) => {
+  if(status === emailData.EmailTaskStatus.SendStart){
+    return '发送中'
+  }else if(status === emailData.EmailTaskStatus.SendPause){
+    return '发送暂停'
+  }else if(status === emailData.EmailTaskStatus.SendStop){
+    return '发送终止'
+  }else if(status === emailData.EmailTaskStatus.SendReset){
+    return '发送重置'
+  }else if(status === emailData.EmailTaskStatus.SendError){
+    return '发送失败'
+  }else if(status === emailData.EmailTaskStatus.SendSuccess){
+    return '发送完成'
   }
-  if(status === 2){
-    return "发送暂停"
+}
+// 获取开始时间显示
+const getStartTime = (row) => {
+  if(row.start_date === '1970-01-01 08:00:00'){
+    return '未开始'
   }
-  if(status === 3){
-    return "发送终止"
+  return row.start_date
+}
+// 获取结束时间显示
+const getEndTime = (row) => {
+  if(row.task_status === emailData.EmailTaskStatus.SendError){
+    return '发送失败'
   }
-  if(status === 4){
-    return "发送重置"
+  if(row.end_date === '1970-01-01 08:00:00'){
+    return '未结束'
   }
-  if(status === 5){
-    return "发送失败"
-  }
-  if(status === 6){
-    return "发送成功"
-  }
+  return row.end_date
 }
 </script>
 

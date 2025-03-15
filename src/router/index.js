@@ -30,7 +30,7 @@ const routes = [
   {
     path: "/MainLayout",
     component: MainLayout,
-    redirect: "/fileManage", // 默认重定向到 fileManage
+    redirect: "/sendEmail", // 默认重定向到 fileManage
     children: [
       // 发送管理
       {path:"/sendEmail", name: "SendEmail", component: SendEmail},

@@ -13,10 +13,11 @@
                   <el-form-item>
                     <el-input v-model="manualTaskSearchForm.subject" style="width: 200px;" placeholder="请搜索主题名称" clearable></el-input>
                   </el-form-item>
-                  <el-form-item>
+                  <!-- 僵尸用户的版本，客户端才会搜索发件人、发件人邮箱 -->
+                  <el-form-item v-if="false">
                     <el-input v-model="manualTaskSearchForm.senderName" style="width: 200px;" placeholder="请搜索发件人" clearable></el-input>
                   </el-form-item>
-                  <el-form-item>
+                  <el-form-item v-if="false">
                     <el-input v-model="manualTaskSearchForm.senderEmail" style="width: 200px;" placeholder="请搜索发件人邮箱" clearable></el-input>
                   </el-form-item>
                   <el-form-item>
@@ -168,10 +169,11 @@
                   <el-form-item>
                     <el-input v-model="circleTaskSearchForm.subject" style="width: 200px;" placeholder="请搜索主题名称" clearable></el-input>
                   </el-form-item>
-                  <el-form-item>
+                  <!-- 僵尸用户的版本，客户端才会搜索发件人、发件人邮箱 -->
+                  <el-form-item v-if="false">
                     <el-input v-model="circleTaskSearchForm.senderName" style="width: 200px;" placeholder="请搜索发件人" clearable></el-input>
                   </el-form-item>
-                  <el-form-item>
+                  <el-form-item v-if="false">
                     <el-input v-model="circleTaskSearchForm.senderEmail" style="width: 200px;" placeholder="请搜索发件人邮箱" clearable></el-input>
                   </el-form-item>
                   <el-form-item>
@@ -334,7 +336,9 @@
             </el-tab-pane>
           </el-tabs>
         </el-tab-pane>
-        <el-tab-pane label="节日发送" name="festival">
+
+        <!-- 客户端目前不给予节日发送、生日发送 -->
+        <el-tab-pane v-if="false" label="节日发送" name="festival">
           <el-tabs type="border-card">
             <el-tab-pane label="管理节日发送任务">
               <!-- 开启节日发送 -->
@@ -586,7 +590,7 @@
             </el-tab-pane>
           </el-tabs>
         </el-tab-pane>
-        <el-tab-pane label="生日发送" name="birth">
+        <el-tab-pane v-if="false" label="生日发送" name="birth">
           <el-tabs type="border-card">
             <el-tab-pane label="管理生日发送任务">
               <!-- 开启生日发送 -->
@@ -1049,7 +1053,7 @@ const resetSearchManualTask = () => {
 const manualTaskStart = async (taskId) => {
   try {
     const requestData = {
-      task_id: taskId,
+      email_task_id: taskId,
       operate_status: 1,
     }
     console.log("开始手动发送邮件任务请求数据", requestData);
@@ -1060,8 +1064,8 @@ const manualTaskStart = async (taskId) => {
       // 更新本地缓存状态
       if(manualTaskPagination.value.cachedData.get(manualTaskPagination.value.serverPage)){
         manualTaskPagination.value.cachedData.get(manualTaskPagination.value.serverPage).forEach(item => {
-          if(item.id === taskId){
-            item.status = 1;
+          if(item.task_id === taskId){
+            item.task_status = 1;
           }
         })
       }
@@ -1075,7 +1079,7 @@ const manualTaskStart = async (taskId) => {
 const manualTaskPause = async (taskId) => {
   try {
     const requestData = {
-      task_id: taskId,
+      email_task_id: taskId,
       operate_status: 2,
     }
     console.log("暂停手动发送邮件任务请求数据", requestData);
@@ -1086,8 +1090,8 @@ const manualTaskPause = async (taskId) => {
       // 更新本地缓存状态
       if(manualTaskPagination.value.cachedData.get(manualTaskPagination.value.serverPage)){
         manualTaskPagination.value.cachedData.get(manualTaskPagination.value.serverPage).forEach(item => {
-          if(item.id === taskId){
-            item.status = 2;
+          if(item.task_id === taskId){
+            item.task_status = 2;
           }
         })
       }
@@ -1101,7 +1105,7 @@ const manualTaskPause = async (taskId) => {
 const manualTaskStop = async (taskId) => {
   try {
     const requestData = {
-      task_id: taskId,
+      email_task_id: taskId,
       operate_status: 3,
     }
     console.log("终止手动发送邮件任务请求数据", requestData);
@@ -1112,8 +1116,8 @@ const manualTaskStop = async (taskId) => {
       // 更新本地缓存状态
       if(manualTaskPagination.value.cachedData.get(manualTaskPagination.value.serverPage)){
         manualTaskPagination.value.cachedData.get(manualTaskPagination.value.serverPage).forEach(item => {
-          if(item.id === taskId){
-            item.status = 3;
+          if(item.task_id === taskId){
+            item.task_status = 3;
           }
         })
       }
@@ -1181,7 +1185,7 @@ const resetSearchCircleTask = () => {
 const circleTaskStart = async (taskId) => {
   try {
     const requestData = {
-      task_id: taskId,
+      email_task_id: taskId,
       operate_status: 1,
     }
     console.log("开始循环发送邮件任务请求数据", requestData);
@@ -1192,8 +1196,8 @@ const circleTaskStart = async (taskId) => {
       // 更新本地缓存状态
       if(circleTaskPagination.value.cachedData.get(circleTaskPagination.value.serverPage)){
         circleTaskPagination.value.cachedData.get(circleTaskPagination.value.serverPage).forEach(item => {
-          if(item.id === taskId){
-            item.status = 1;
+          if(item.task_id === taskId){
+            item.task_status = 1;
           }
         })
       }
@@ -1207,7 +1211,7 @@ const circleTaskStart = async (taskId) => {
 const circleTaskPause = async (taskId) => {
   try {
     const requestData = {
-      task_id: taskId,
+      email_task_id: taskId,
       operate_status: 2,
     }
     console.log("暂停循环发送邮件任务请求数据", requestData);
@@ -1218,8 +1222,8 @@ const circleTaskPause = async (taskId) => {
       // 更新本地缓存状态
       if(circleTaskPagination.value.cachedData.get(circleTaskPagination.value.serverPage)){
         circleTaskPagination.value.cachedData.get(circleTaskPagination.value.serverPage).forEach(item => {
-          if(item.id === taskId){
-            item.status = 2;
+          if(item.task_id === taskId){
+            item.task_status = 2;
           }
         })
       }
@@ -1233,7 +1237,7 @@ const circleTaskPause = async (taskId) => {
 const circleTaskStop = async (taskId) => {
   try {
     const requestData = {
-      task_id: taskId,
+      email_task_id: taskId,
       operate_status: 3,
     }
     console.log("终止循环发送邮件任务请求数据", requestData);
@@ -1244,8 +1248,8 @@ const circleTaskStop = async (taskId) => {
       // 更新本地缓存状态
       if(circleTaskPagination.value.cachedData.get(circleTaskPagination.value.serverPage)){
         circleTaskPagination.value.cachedData.get(circleTaskPagination.value.serverPage).forEach(item => {
-          if(item.id === taskId){
-            item.status = 3;
+          if(item.task_id === taskId){
+            item.task_status = 3;
           }
         })
       }
@@ -1260,18 +1264,18 @@ const circleTaskReset = async (taskId) => {
   try {
     const requestData = {
       task_id: taskId,
-      operate_status: 4,
+      //operate_status: "4",
     }
     console.log("重置循环发送邮件任务请求数据", requestData);
-    const res = await emailTaskApi.updateStatus(requestData)
+    const res = await emailTaskApi.resetStatus(requestData)
     if (res.code === 200) {
       ElMessage.success("重置成功");
       console.log("重置循环发送邮件任务响应数据", res);
       // 更新本地缓存状态
       if(circleTaskPagination.value.cachedData.get(circleTaskPagination.value.serverPage)){
         circleTaskPagination.value.cachedData.get(circleTaskPagination.value.serverPage).forEach(item => {
-          if(item.id === taskId){
-            item.status = 4;
+          if(item.task_id === taskId){
+            item.task_status = 4;
           }
         })
       }
@@ -1332,7 +1336,7 @@ const resetSearchFestivalTask = () => {
 const festivalTaskStart = async (taskId) => {
   try {
     const requestData = {
-      task_id: taskId,
+      email_task_id: taskId,
       operate_status: 1,
     }
     console.log("开始节日发送邮件任务请求数据", requestData);
@@ -1343,8 +1347,8 @@ const festivalTaskStart = async (taskId) => {
       // 更新本地缓存状态
       if(festivalTaskPagination.value.cachedData.get(festivalTaskPagination.value.serverPage)){
         festivalTaskPagination.value.cachedData.get(festivalTaskPagination.value.serverPage).forEach(item => {
-          if(item.id === taskId){
-            item.status = 1;
+          if(item.task_id === taskId){
+            item.task_status = 1;
           }
         })
       }
@@ -1358,7 +1362,7 @@ const festivalTaskStart = async (taskId) => {
 const festivalTaskPause = async (taskId) => {
   try {
     const requestData = {
-      task_id: taskId,
+      email_task_id: taskId,
       operate_status: 2,
     }
     console.log("暂停节日发送邮件任务请求数据", requestData);
@@ -1369,8 +1373,8 @@ const festivalTaskPause = async (taskId) => {
       // 更新本地缓存状态
       if(festivalTaskPagination.value.cachedData.get(festivalTaskPagination.value.serverPage)){
         festivalTaskPagination.value.cachedData.get(festivalTaskPagination.value.serverPage).forEach(item => {
-          if(item.id === taskId){
-            item.status = 2;
+          if(item.task_id === taskId){
+            item.task_status = 2;
           }
         })
       }
@@ -1384,7 +1388,7 @@ const festivalTaskPause = async (taskId) => {
 const festivalTaskStop = async (taskId) => {
   try {
     const requestData = {
-      task_id: taskId,
+      email_task_id: taskId,
       operate_status: 3,
     }
     console.log("终止节日发送邮件任务请求数据", requestData);
@@ -1395,8 +1399,8 @@ const festivalTaskStop = async (taskId) => {
       // 更新本地缓存状态
       if(festivalTaskPagination.value.cachedData.get(festivalTaskPagination.value.serverPage)){
         festivalTaskPagination.value.cachedData.get(festivalTaskPagination.value.serverPage).forEach(item => {
-          if(item.id === taskId){
-            item.status = 3;
+          if(item.task_id === taskId){
+            item.task_status = 3;
           }
         })
       }
@@ -1453,28 +1457,28 @@ const handleFestivalTemplateSelect = (template) => {
 
 // 生日发送
 const getBirthTaskId = async () => {
-  // try {
-  //   // 如果本地缓存有生日邮件任务任务id，则直接返回
-  //   if(localStorage.getItem("birthTaskInfo")){
-  //     return
-  //   }
-  //   const requestData = {
-  //     taskType: 4,
-  //     pageNum: 1,
-  //     pageSize: 5,
-  //   }
-  //   const res = await emailApi.filterTask(requestData)
-  //   if (res.code === 200) {
-  //     console.log("获取生日邮件任务响应数据", res);
-  //     localStorage.setItem("birthTaskInfo", res.data.task_info[0])
-  //     birthTaskInfo.value = localStorage.getItem("birthTaskInfo")
-  //     console.log("获取生日邮件任务信息", birthTaskInfo.value);
-  //   } else {
-  //     errorHandler.showError("获取生日邮件任务失败,请重试", res);
-  //   }
-  // } catch (error) {
-  //   errorHandler.showError("获取生日邮件任务失败,请重试", error);
-  // }
+  try {
+    // 如果本地缓存有生日邮件任务任务id，则直接返回
+    if(localStorage.getItem("birthTaskInfo")){
+      return
+    }
+    const requestData = {
+      taskType: 4,
+      pageNum: 1,
+      pageSize: 5,
+    }
+    const res = await emailApi.filterTask(requestData)
+    if (res.code === 200) {
+      console.log("获取生日邮件任务响应数据", res);
+      localStorage.setItem("birthTaskInfo", res.data.task_info[0])
+      birthTaskInfo.value = localStorage.getItem("birthTaskInfo")
+      console.log("获取生日邮件任务信息", birthTaskInfo.value);
+    } else {
+      errorHandler.showError("获取生日邮件任务失败,请重试", res);
+    }
+  } catch (error) {
+    errorHandler.showError("获取生日邮件任务失败,请重试", error);
+  }
 }
 const searchBirthEmailClick = async () => {
   clearBirthEmailCache()

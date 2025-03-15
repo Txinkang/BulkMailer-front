@@ -15,9 +15,14 @@
         </el-form-item>
 
         <el-form-item>
-          <el-input style="width: 200px" placeholder="请搜索所属用户" clearable v-model="searchForm.belong_user_name">
-            <el-icon><Search/></el-icon>
-          </el-input>
+          <el-select
+            v-model="searchForm.belong_user_name"
+            style="width: 200px;"
+            placeholder="请选择所属用户"
+            clearable
+          >
+            <el-option v-for="user in attachmentBelongUserList" :key="user.id" :label="user.name" :value="user.value" />
+          </el-select>
         </el-form-item>
 
         <el-form-item style="display: flex;flex-direction: row;gap: 10px">
@@ -62,9 +67,9 @@
 import { ref, computed, defineEmits } from 'vue'
 import { Search, Refresh } from '@element-plus/icons-vue'
 import {fileApi} from '@/api/file/file.js'
-import {sendEmailApi} from '@/api/sendEmail/sendEmail.js'
 import {errorHandler} from '@/utils/errorHandler.js'
 import SmartPagination from '@/components/SmartPagination.vue'
+import UserConstantData from "@/constants/UserConstantData.js";
 
 // 接收父组件传入的控制值
 const props = defineProps({
@@ -87,6 +92,7 @@ const searchForm = ref({
   attachment_name: '',
   belong_user_name: ''
 })
+const attachmentBelongUserList = ref([{id:1,name:'无',value:''},{id:2,name:'公司',value:UserConstantData.companyName},{id:3,name:'个人',value:localStorage.getItem('user_name')}]);
 // 附件列表数据
 const attachmentGroup = ref([])
 
@@ -173,8 +179,8 @@ const clearAttachmentCache = () => {
 const handleConfirm = () => {
   // 筛选attachmentGroup数组，只保留attachment_id和attachment_url字段
   attachmentGroup.value = attachmentGroup.value.map(item => ({
-    attachment_id: item.attachment_id,
-    attachment_url: item.attachment_url,
+    attachment_id: item.id,
+    attachment_url: item.url,
     attachment_name: item.name
   }))
   // 触发事件，将选中的附件传递给父组件
