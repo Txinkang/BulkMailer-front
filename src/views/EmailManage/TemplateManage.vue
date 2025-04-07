@@ -263,13 +263,13 @@
 
 
 <script setup>
-import {ref, computed} from "vue";
+import {ref, computed, onMounted } from "vue";
 import RichEditor from "@/components/RichEditor.vue";
 import { emailTypeApi } from "@/api/dictionary/emailType.js";
 import { templateApi } from "@/api/email/template/template.js";
 import { errorHandler } from "@/utils/errorHandler";
 import { debounce } from "lodash";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 import SmartPagination from "@/components/SmartPagination.vue";
 import StatusConstantData from "@/constants/StatusConstantData.js";
 import ListDialog from "@/components/ListDialog.vue";
@@ -323,6 +323,7 @@ const saveTemplateFormRef = ref(null)
 //================================ 功能 =================================
 // 搜索模板点击事件
 const searchTemplateClick = () => {
+  clearTemplateCache()
   searchTemplate();
 }
 // 搜索模板
@@ -361,7 +362,7 @@ const resetSearchTemplate = () => {
     creator_name: "",
     belong_user_name: "",
   }
-  clearTemplateCache();
+  //clearTemplateCache();
 }
 // 查看模板
 const checkTemplate = async (templateId) => {
@@ -467,6 +468,17 @@ const saveTemplate = async () => {
 // 删除模板
 const deleteTemplate = async (templateId) => {
   try {
+    // 先弹窗确认是否删除
+    await ElMessageBox.confirm(
+        '是否确认删除？',
+        '删除确认',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          closeOnClickModal: false,
+        }
+    )
     const requestData = {
       template_id: templateId
     }
@@ -486,7 +498,11 @@ const deleteTemplate = async (templateId) => {
       errorHandler.showError("删除模板失败,请重试", res);
     }
   } catch (error) {
-    errorHandler.showError("删除模板失败,请重试", error);
+    if (error === 'cancel') {
+      console.log('用户取消了删除操作')
+    } else {
+      errorHandler.showError("删除模板失败,请重试", error);
+    }
   }
 }
 
@@ -640,7 +656,12 @@ const completeTemplateContent = (templateContent) => {
   return allContent
 }
 
-
+//================================页面初始操作================================
+onMounted(() => {
+  if(templateCurrentPageData.value.length === 0){
+    searchTemplateClick()
+  }
+})
 </script>
 
 

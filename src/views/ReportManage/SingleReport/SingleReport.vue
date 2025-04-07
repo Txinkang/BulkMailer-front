@@ -80,7 +80,7 @@
 
     <!-- 表格 -->
     <div style="width: 100%">
-      <el-table :data="emailTaskCurrentPageData" border style="width: 1000px;margin-bottom: 2em">
+      <el-table :data="emailTaskCurrentPageData" border style="width: 1200px;margin-bottom: 2em">
         <!-- 主题列 -->
         <el-table-column label="主题" min-width="120px">
           <template #default="{ row }">
@@ -154,7 +154,7 @@
 </template>
 
 <script setup>
-import {ref, computed} from "vue";
+import {ref, computed, onMounted } from "vue";
 import {emailApi} from "@/api/email/email.js";
 import {reportApi} from "@/api/report/report.js";
 import {ElMessage} from 'element-plus'
@@ -307,7 +307,7 @@ const resetTask = () => {
   searchTaskForm.value.task_status = null
   searchTaskForm.value.start_date = null
   searchTaskForm.value.end_date = null
-  clearEmailTaskCache()
+  //clearEmailTaskCache()
   console.log("重置邮件任务");
 }
 
@@ -405,12 +405,16 @@ const getEndTime = (row) => {
   }
   return row.end_date
 }
+
+//================================页面初始操作================================
+onMounted(() => {
+  if(emailTaskCurrentPageData.value.length === 0){
+    searchTaskClick()
+  }
+})
 </script>
 
 <style scoped>
-.mail-container {
-  padding: 20px;
-}
 
 .header {
   display: flex;

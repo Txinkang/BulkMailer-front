@@ -114,7 +114,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { countryApi } from "@/api/dictionary/country.js";
 import { errorHandler } from '@/utils/errorHandler.js'
 import { ElMessageBox, ElMessage } from 'element-plus'
@@ -181,15 +181,24 @@ const importCountry = async (file) => {
     console.log("导入国家文件", file.raw);
     const res = await countryApi.importCountry(file.raw)
     if (res.code === 200) {
+      // 处理错误信息，每条错误信息换行显示
+      let errorMsgContent = '';
+      if (res.data.errorMsg && Array.isArray(res.data.errorMsg)) {
+        errorMsgContent = `<br>&nbsp;&nbsp;&nbsp;&nbsp;失败原因:<br>${res.data.errorMsg.map(msg => `&nbsp;&nbsp;&nbsp;&nbsp;${msg}`).join('<br>')}`;
+      } else if (res.data.errorMsg) {
+        errorMsgContent = `<br>&nbsp;&nbsp;&nbsp;&nbsp;失败原因: ${res.data.errorMsg}`;
+      } else {
+        errorMsgContent = '<br>&nbsp;&nbsp;&nbsp;&nbsp;如果有数据导入失败，原因可能为：国家名称已存在';
+      }
       ElMessageBox.alert(
-        `导入国家成功:
-        成功${res.data.success_count}条\n
-        失败${res.data.fail_count}条。
-        \n如果有数据导入失败，原因可能为：国家名称或国家代码已被创建`,
+        `导入国家成功:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;成功${res.data.success_count}条<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;失败${res.data.fail_count}条${errorMsgContent}`,
         '导入结果',
         {
           type: 'success',
-          confirmButtonText: '确定'
+          confirmButtonText: '确定',
+          dangerouslyUseHTMLString: true // 允许使用HTML
         }
       )
       console.log("导入国家成功", res);
@@ -301,6 +310,17 @@ const searchCountry = async () => {
 // 删除国家
 const deleteCountry = async (row) => {
   try {
+    // 先弹窗确认是否删除
+    await ElMessageBox.confirm(
+        '是否确认删除？',
+        '删除确认',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          closeOnClickModal: false,
+        }
+    )
     const requestData = {
       country_id: row.country_id
     }
@@ -321,7 +341,11 @@ const deleteCountry = async (row) => {
       errorHandler.showError("删除国家失败,请重试", res);
     }
   } catch (error) {
-    errorHandler.showError("删除国家失败,请重试", error);
+    if (error === 'cancel') {
+      console.log('用户取消了删除操作')
+    } else {
+      errorHandler.showError("删除国家失败,请重试", error);
+    }
   }
 }
 // 重置搜索
@@ -330,7 +354,7 @@ const resetCountrySearch = () => {
     countryName: "",
     countryCode: ""
   };
-  clearCountryCache()
+  //clearCountryCache()
 }
 
 //======================对话框======================
@@ -369,6 +393,12 @@ const closeUpdateCountryDialog = () => {
 };
 
 
+//================================页面初始操作================================
+onMounted(() => {
+  if(countryCurrentPageData.value.length === 0){
+    handleSearchCountryClick()
+  }
+})
 </script>
 
 <style scoped>

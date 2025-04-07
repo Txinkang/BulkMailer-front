@@ -120,8 +120,9 @@
           </el-form>
         </div>
 
-        <!-- 批量分配按钮 -->
+        <!-- 批量分配按钮、表格 -->
         <div style="display: flex;flex-direction: column">
+          <!-- 批量分配按钮 -->
           <div style="display: flex;flex-flow: row wrap;gap: 10px;margin: 0 0 20px 0">
             <el-button type="primary" :disabled="selectedRows.length === 0" @click="openAllAssignSupplierDialog">
               批量分配
@@ -133,7 +134,7 @@
 
           <!-- 表格 -->
           <div>
-            <el-table ref="supplierTableRef" :data="supplierCurrentPageData" border @selection-change="handleSelectionChange" :row-key="row => row.supplier_id" style="width: 1000px">
+            <el-table ref="supplierTableRef" :data="supplierCurrentPageData" border @selection-change="handleSelectionChange" :row-key="row => row.supplier_id" style="width: 1200px">
               <!-- 多选框列 -->
               <el-table-column type="selection" width="55" :reserve-selection="true"></el-table-column>
               <!-- 供应商名称列 -->
@@ -336,7 +337,7 @@
               @click="createCheckCommodityDialog">
               查看
             </el-button>
-            <el-button type="primary" @click="chooseCommodity">添加</el-button>
+            <el-button type="primary" @click="chooseCommodity(true)">添加</el-button>
           </template>
         </el-form-item>
 
@@ -413,21 +414,21 @@
       >
         <!-- 供应商名称输入框 -->
         <el-form-item label="供应商名称" prop="supplierName">
-          <el-input v-model="updateSupplierForm.supplierName" placeholder="请输入供应商名称" clearable/>
+          <el-input v-model="updateSupplierForm.supplier_name" placeholder="请输入供应商名称" clearable/>
         </el-form-item>
 
         <!-- 联系人输入框 -->
         <el-form-item label="联系人" prop="contactPerson">
-          <el-input v-model="updateSupplierForm.contactPerson" placeholder="请输入联系人" clearable/>
+          <el-input v-model="updateSupplierForm.contact_person" placeholder="请输入联系人" clearable/>
         </el-form-item>
 
         <!-- 联系方式输入框 -->
         <el-form-item label="联系方式" prop="contactWay">
-          <el-input v-model="updateSupplierForm.contactWay" placeholder="请输入联系方式" clearable/>
+          <el-input v-model="updateSupplierForm.contact_way" placeholder="请输入联系方式" clearable/>
         </el-form-item>
 
         <el-form-item label="供应商等级" prop="supplierLevel">
-          <el-select v-model="updateSupplierForm.supplierLevel" placeholder="请选择等级" clearable>
+          <el-select v-model="updateSupplierForm.supplier_level" placeholder="请选择等级" clearable>
             <el-option label="初级" :value="1"/>
             <el-option label="中级" :value="2"/>
             <el-option label="高级" :value="3"/>
@@ -436,11 +437,11 @@
 
         <el-form-item label="国家名称" prop="supplierCountryId">
             <el-select
-              v-model="updateSupplierForm.supplierCountryId"
-              placeholder="请搜索国家名称"
+              v-model="updateSupplierForm.supplier_country_id"
+              :placeholder="updateSupplierForm.supplier_country_name || '请选择国家'"
               filterable
               remote
-              :remote-method="debouncedCreateSearchCountry"
+              :remote-method="debouncedUpdateSearchCountry"
               clearable>
 
               <el-option
@@ -452,7 +453,7 @@
         </el-form-item>
 
         <el-form-item label="贸易类型" prop="tradeType">
-          <el-select v-model="updateSupplierForm.tradeType" placeholder="请选择贸易类型" clearable>
+          <el-select v-model="updateSupplierForm.trade_type" placeholder="请选择贸易类型" clearable>
             <el-option label="工厂" :value="1"/>
             <el-option label="贸易商" :value="2"/>
           </el-select>
@@ -461,14 +462,14 @@
         <!-- 商品选择 -->
         <el-form-item label="经营范围" prop="commodityId">
           <template #default="{ }">
-            <span>共 {{ updateSupplierForm.commodityId.length }} 个商品</span>
+            <span>共 {{ updateSupplierForm.commodity.length }} 个商品</span>
             <el-button
               size="mini"
               type="text"
-              @click="createCheckCommodityDialog">
+              @click="updateCheckCommodityDialog">
               查看
             </el-button>
-            <el-button type="primary" @click="chooseCommodity">添加</el-button>
+            <el-button type="primary" @click="chooseCommodity(false)">添加</el-button>
           </template>
         </el-form-item>
 
@@ -531,7 +532,7 @@
 </template>
 
 <script setup>
-import { ref ,computed} from "vue";
+import { ref ,computed, onMounted} from "vue";
 import {Plus} from "@element-plus/icons-vue";
 import { debounce } from 'lodash';
 import {countryApi} from "@/api/dictionary/country.js";
@@ -549,6 +550,8 @@ import ChangeBelongUserDialog from "@/components/receiver/ChangeBelongUserDialog
 import AllAssignReceiverDialog from "@/components/receiver/AllAssignReceiverDialog.vue";
 // ========================= 数据 =========================
 const selectedUserId = ref('');
+const isCreate = ref(true);
+
 //=============== 创建供应商 ================
 // 创建供应商表单数据
 const createSupplierForm = ref({
@@ -627,13 +630,14 @@ const searchSupplierForm = ref({
 });
 //=============== 修改供应商 ================
 const updateSupplierForm = ref({
-  supplierName: '',
-  contactPerson: '',
-  contactWay: '',
-  supplierLevel: '',
-  supplierCountryId: '',
+  supplier_name: '',
+  contact_person: '',
+  contact_way: '',
+  supplier_level: '',
+  supplier_country_id: '',
   countryOptions: [],
-  tradeType: '',
+  supplier_country_name: '',
+  trade_type: '',
   commodity: [],
   commodityId: [],
   sex: '',
@@ -698,14 +702,24 @@ const importSupplier = async (file) => {
     console.log("导入供应商", file.raw);
     const res = await supplierApi.importSupplier(file.raw)
     if (res.code === 200) {
+      // 处理错误信息，每条错误信息换行显示
+      let errorMsgContent = '';
+      if (res.data.errorMsg && Array.isArray(res.data.errorMsg)) {
+        errorMsgContent = `<br>&nbsp;&nbsp;&nbsp;&nbsp;失败原因:<br>${res.data.errorMsg.map(msg => `&nbsp;&nbsp;&nbsp;&nbsp;${msg}`).join('<br>')}`;
+      } else if (res.data.errorMsg) {
+        errorMsgContent = `<br>&nbsp;&nbsp;&nbsp;&nbsp;失败原因: ${res.data.errorMsg}`;
+      } else {
+        errorMsgContent = '<br>&nbsp;&nbsp;&nbsp;&nbsp;如果有数据导入失败，原因可能为：国家、商品、邮箱错误';
+      }
       ElMessageBox.alert(
-        `导入供应商成功:
-        成功${res.data}条。
-        \n如果有数据导入失败，原因可能为：邮箱已被注册，或其他参数不正确。`,
+        `导入供应商成功:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;成功${res.data.success_count}条<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;失败${res.data.fail_count}条${errorMsgContent}`,
         '导入结果',
         {
           type: 'success',
-          confirmButtonText: '确定'
+          confirmButtonText: '确定',
+          dangerouslyUseHTMLString: true // 允许使用HTML
         }
       )
       console.log("导入供应商成功", res);
@@ -773,8 +787,8 @@ const resetSearchSupplier = () => {
     creatorName: '',
     status: null,
   }
-  clearSupplierCache()
-  clearSelectedRows()
+  // clearSupplierCache()
+  // clearSelectedRows()
 }
 // 搜索供应商
 const searchSupplier = async () => {
@@ -816,12 +830,12 @@ const updateSupplier = async () => {
   try {
     const requestData = {
       supplierId: selectedUserId.value,
-      supplierName: updateSupplierForm.value.supplierName === '' ? null : updateSupplierForm.value.supplierName,
-      contactPerson: updateSupplierForm.value.contactPerson === '' ? null : updateSupplierForm.value.contactPerson,
-      contactWay: updateSupplierForm.value.contactWay === '' ? null : updateSupplierForm.value.contactWay,
-      supplierLevel: updateSupplierForm.value.supplierLevel ? Number(updateSupplierForm.value.supplierLevel) : null,
-      supplierCountryId: updateSupplierForm.value.supplierCountryId === '' ? null : updateSupplierForm.value.supplierCountryId,
-      tradeType: updateSupplierForm.value.tradeType ? Number(updateSupplierForm.value.tradeType) : null,
+      supplierName: updateSupplierForm.value.supplier_name === '' ? null : updateSupplierForm.value.supplier_name,
+      contactPerson: updateSupplierForm.value.contact_person === '' ? null : updateSupplierForm.value.contact_person,
+      contactWay: updateSupplierForm.value.contact_way === '' ? null : updateSupplierForm.value.contact_way,
+      supplierLevel: updateSupplierForm.value.supplier_level ? Number(updateSupplierForm.value.supplier_level) : null,
+      supplierCountryId: updateSupplierForm.value.supplier_country_id === '' ? null : updateSupplierForm.value.supplier_country_id,
+      tradeType: updateSupplierForm.value.trade_type ? Number(updateSupplierForm.value.trade_type) : null,
       commodityId: updateSupplierForm.value.commodityId === '' ? null : updateSupplierForm.value.commodityId,
       sex: updateSupplierForm.value.sex === '' ? null : updateSupplierForm.value.sex,
       birth: updateSupplierForm.value.birth ? formatDate(updateSupplierForm.value.birth) : null,
@@ -848,6 +862,17 @@ const updateSupplier = async () => {
 // 删除供应商
 const deleteSupplier = async (row) => {
   try {
+    // 先弹窗确认是否删除
+    await ElMessageBox.confirm(
+        '是否确认删除？',
+        '删除确认',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          closeOnClickModal: false,
+        }
+    )
     const requestData = {
       supplierId: row.supplier_id,
     }
@@ -871,7 +896,11 @@ const deleteSupplier = async (row) => {
       await searchSupplier();
     }
   } catch (error) {
-    errorHandler.showError("删除供应商失败,请重试", error);
+    if (error === 'cancel') {
+      console.log('用户取消了删除操作')
+    } else {
+      errorHandler.showError("删除供应商失败,请重试", error);
+    }
   }
 }
 // ========================= 对话框控制 =========================
@@ -893,13 +922,43 @@ const openCreateSupplierDialog = () => {
 };
 // 更新供应商对话框
 const openUpdateSupplierDialog = (row) => {
-  selectedUserId.value = row.supplier_id
+  console.log("更新供应商选中行数据", row);
+
+  // 赋值给更新表单
+  updateSupplierForm.value = { ...row };
+  selectedUserId.value = row.supplier_id;
+
+  // 显示商品数据
+  updateSupplierForm.value.commodityId = row.commodity.map(item => item.commodityId);
+  updateSupplierForm.value.commodity = row.commodity.map(item => ({
+    commodity_id: item.commodityId,
+    commodity_name: item.commodityName
+  }));
+
+  // 显示国家数据
+  if (row.supplier_country_id && row.supplier_country_name) {
+    updateSupplierForm.value.supplier_country_id = row.supplier_country_id;
+    updateSupplierForm.value.countryOptions = [{
+      country_id: row.supplier_country_id,
+      country_name: row.supplier_country_name
+    }];
+  } else {
+    updateSupplierForm.value.supplier_country_id = '';
+    updateSupplierForm.value.countryOptions = [];
+  }
+
+  console.log("更新供应商选中行传输数据", updateSupplierForm.value);
   updateSupplierDialog.value = true;
 };
-// 创建供应商查看经营范围
+// 创建供应商查看商品
 const createCheckCommodityDialog = () => {
   listDialog.value = true;
   listDetails.value = createSupplierForm.value.commodity.map(item => item.commodity_name);
+}
+// 修改供应商查看商品
+const updateCheckCommodityDialog = () => {
+  listDialog.value = true;
+  listDetails.value = updateSupplierForm.value.commodity.map(item => item.commodity_name);
 }
 // 查看供应商商品列表
 const checkCommodityList = (row,column) => {
@@ -959,12 +1018,14 @@ const closeCreateSupplierDialog = () => {
 // 更新供应商对话框
 const closeUpdateSupplierDialog = () => {
   updateSupplierForm.value = {
-    supplierName: '',
-    contactPerson: '',
-    contactWay: '',
-    supplierLevel: '',
-    supplierCountryId: '',
-    tradeType: '',
+    supplier_name: '',
+    contact_person: '',
+    contact_way: '',
+    supplier_level: '',
+    supplier_country_id: '',
+    countryOptions: [],
+    supplier_country_name: '',
+    trade_type: '',
     commodity: [],
     commodityId: [],
     sex: '',
@@ -991,14 +1052,26 @@ const addUpdateEmailInput = () => {
   updateSupplierForm.value.emails.push('')
 }
 // 选择商品
-const chooseCommodity = () => {
+const chooseCommodity = (create) => {
   chooseCommodityDialog.value = true;
+  console.log("选择商品", create);
+  if(create){
+    isCreate.value = true;
+  }else{
+    isCreate.value = false;
+  }
 };
 //子组件搜索商品回调函数
 const handleCommodityConfirm = async (selectedCommodities, selectedIds) => {
-  createSupplierForm.value.commodity = selectedCommodities;
-  createSupplierForm.value.commodityId = selectedIds;
-  console.log("创建供应商选择商品", createSupplierForm.value.commodity, createSupplierForm.value.commodityId);
+  if(isCreate.value){
+    createSupplierForm.value.commodity = selectedCommodities;
+    createSupplierForm.value.commodityId = selectedIds;
+    console.log("创建客户选择商品", createSupplierForm.value.commodity, createSupplierForm.value.commodityId);
+  }else{
+    updateSupplierForm.value.commodity = selectedCommodities;
+    updateSupplierForm.value.commodityId = selectedIds;
+    console.log("修改客户选择商品", updateSupplierForm.value.commodity, updateSupplierForm.value.commodityId);
+  }
 }
 // 处理表格选中变化
 const handleSelectionChange = (rows) => {
@@ -1034,6 +1107,31 @@ const chooseCreateCountry = async (query) => {
   }
 }
 const debouncedCreateSearchCountry = debounce(chooseCreateCountry, 500)
+
+// 修改客户选择国家
+const chooseUpdateCountry = async (query) => {
+  try {
+    const requestData = {
+      country_name: query,
+      country_code: '',
+      page_num: 1,
+      page_size: 100
+    }
+    console.log("搜索国家请求数据", requestData);
+    const res = await countryApi.filterCountry(requestData)
+    if (res.code === 200) {
+      // 将国家数据缓存
+      updateSupplierForm.value.countryOptions = res.data.country
+      console.log("修改客户选择国家响应数据", res);
+      console.log("修改客户选择国家缓存数据", updateSupplierForm.value.countryOptions);
+    } else {
+      errorHandler.showError("搜索国家失败,请重试", res);
+    }
+  } catch (error) {
+    errorHandler.showError("搜索国家失败,请重试", error);
+  }
+}
+const debouncedUpdateSearchCountry = debounce(chooseUpdateCountry, 500)
 
 // 搜索供应商选择国家
 const chooseSearchCountry = async (query) => {
@@ -1084,14 +1182,15 @@ const chooseSearchEmailType = async (query) => {
 const debouncedSearchEmailType = debounce(chooseSearchEmailType, 500)
 
 
-
+//================================页面初始操作================================
+onMounted(() => {
+  if(supplierCurrentPageData.value.length === 0){
+    searchSupplierClick()
+  }
+})
 </script>
 
 <style scoped>
-.company-container {
-  padding: 20px;
-}
-
 .button-group{
   display: flex;
   flex-flow: row nowrap;

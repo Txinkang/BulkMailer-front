@@ -1,5 +1,4 @@
 import request from "../request";
-import {testApi} from "../request";
 export const commodityApi = {
   //======================商品======================
   // 导入商品
