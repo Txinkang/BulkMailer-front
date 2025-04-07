@@ -75,10 +75,10 @@
 </template>
 
 <script setup>
-import { ref ,computed} from "vue";
+import { ref ,computed, onMounted} from "vue";
 import { emailTypeApi } from "@/api/dictionary/emailType";
 import { errorHandler } from "@/utils/errorHandler.js";
-import { ElMessage } from "element-plus";
+import { ElMessage,ElMessageBox } from "element-plus";
 import SmartPagination from "@/components/SmartPagination.vue";
 //======================数据======================
 const emailTypeSearchForm = ref({
@@ -123,15 +123,18 @@ const handleEmailTypeLoadData = async (serverPage) => {
   emailTypePagination.value.serverPage = serverPage
   await searchEmailType()
 };
-
-//======================功能======================
-// 搜索邮件按钮点击事件
-const handleSearchEmailTypeClick = () => {
+const clearEmailTypeCache = () => {
   emailTypePagination.value.currentPage = 1;
   emailTypePagination.value.serverPage = 1;
   emailTypePagination.value.cachedData.clear();
   emailTypePagination.value.totalItems = 0;
-  searchEmailType()
+}
+
+//======================功能======================
+// 搜索邮件按钮点击事件
+const handleSearchEmailTypeClick = async () => {
+  clearEmailTypeCache()
+  await searchEmailType()
 }
 
 // 搜索邮件类型
@@ -223,6 +226,17 @@ const updateEmailType = async () => {
 // 删除邮件类型
 const deleteEmailType = async (row) => {
   try{
+    // 先弹窗确认是否删除
+    await ElMessageBox.confirm(
+        '是否确认删除？',
+        '删除确认',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          closeOnClickModal: false,
+        }
+    )
     const requestData = {
       email_type_id: row.email_type_id,
     };
@@ -240,8 +254,12 @@ const deleteEmailType = async (row) => {
     }else{
       errorHandler.showError('删除邮件类型失败,请重试', res)
     }
-  }catch(err){
-    errorHandler.showError('删除邮件类型失败,请重试', err)
+  }catch(error){
+    if (error === 'cancel') {
+      console.log('用户取消了删除操作')
+    } else {
+      errorHandler.showError('删除邮件类型失败,请重试', error)
+    }
   }
 };
 
@@ -250,11 +268,6 @@ const resetEmailTypeSearchForm = () => {
   emailTypeSearchForm.value = {
     email_type_name: "",
   };
-  emailTypePagination.value.currentPage = 1;
-  emailTypePagination.value.serverPage = 1;
-  emailTypePagination.value.cachedData.clear();
-  emailTypePagination.value.totalItems = 0;
-
 };
 
 
@@ -291,7 +304,12 @@ const closeUpdateEmailTypeDialog = () => {
   };
 };
 
-
+//================================页面初始操作================================
+onMounted(() => {
+  if(emailTypeCurrentPageData.value.length === 0){
+    handleSearchEmailTypeClick()
+  }
+})
 </script>
 
 <style scoped>

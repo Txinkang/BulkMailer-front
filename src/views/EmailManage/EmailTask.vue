@@ -69,7 +69,7 @@
 
               <!-- 数据 -->
               <div style="width:100%;overflow-x: auto;">
-                <el-table :data="manualTaskCurrentPageData" border style="width: 1000px;margin-bottom: 20px">
+                <el-table :data="manualTaskCurrentPageData" border style="width: 1200px;margin-bottom: 20px">
                   <!-- 主题列 -->
                   <el-table-column label="主题" align="left" min-width="200">
                     <template #default="{ row }">
@@ -237,7 +237,7 @@
 
               <!-- 数据 -->
               <div style="width:100%;overflow-x: auto;">
-                <el-table :data="circleTaskCurrentPageData" border style="width: 1000px;margin-bottom: 20px">
+                <el-table :data="circleTaskCurrentPageData" border style="width: 1200px;margin-bottom: 20px">
                   <!-- 主题列 -->
                   <el-table-column label="主题" align="left" min-width="200">
                     <template #default="{ row }">
@@ -510,7 +510,7 @@
 
               <!-- 数据 -->
               <div style="width:100%;overflow-x: auto;">
-                <el-table :data="festivalTaskCurrentPageData" border style="width: 1000px;margin-bottom: 20px">
+                <el-table :data="festivalTaskCurrentPageData" border style="width: 1200px;margin-bottom: 20px">
                   <!-- 主题列 -->
                   <el-table-column label="主题" align="left" min-width="200">
                     <template #default="{ row }">
@@ -732,7 +732,7 @@
 
               <!-- 数据 -->
               <div style="width:100%;overflow-x: auto;">
-                <el-table :data="birthEmailCurrentPageData" border style="width: 1000px;margin-bottom: 20px">
+                <el-table :data="birthEmailCurrentPageData" border style="width: 1200px;margin-bottom: 20px">
                   <!-- 主题列 -->
                   <el-table-column label="主题" align="left" min-width="200">
                     <template #default="{ row }">
@@ -1042,7 +1042,7 @@ const searchManualTask = async () => {
   }
 }
 const resetSearchManualTask = () => {
-  clearManualTaskCache()
+  //clearManualTaskCache()
   manualTaskSearchForm.value = {
     taskType: emailData.ManualTaskType,
     subject: null,
@@ -1173,7 +1173,7 @@ const searchCircleTask = async () => {
   }
 }
 const resetSearchCircleTask = () => {
-  clearCircleTaskCache()
+  //clearCircleTaskCache()
   circleTaskSearchForm.value = {
     taskType: emailData.CircleTaskType,
     subject: null,
@@ -1325,7 +1325,7 @@ const searchFestivalTask = async () => {
   }
 }
 const resetSearchFestivalTask = () => {
-  clearFestivalTaskCache()
+  //clearFestivalTaskCache()
   festivalTaskSearchForm.value = {
     taskType: emailData.FestivalTaskType,
     subject: null,
@@ -1548,7 +1548,7 @@ const searchBirthEmail = async () => {
   }
 }
 const resetSearchBirthEmail = () => {
-  clearBirthEmailCache()
+  //clearBirthEmailCache()
   birthEmailSearchForm.value = {
     taskId: birthTaskInfo.value.task_id,
     subject: "",
@@ -1946,10 +1946,28 @@ const getReceiverLevel = (level) => {
     return "高级"
   }
 }
-// 监听生日发送页面
+// 监听点击面板，没有数据就默认请求一次
 const handleTabClick = async (tab) => {
+  if(tab.props.name === 'manual'){
+    if(manualTaskCurrentPageData.value.length === 0){
+      searchManualTaskClick()
+    }
+  }
+  if(tab.props.name === 'circle'){
+    if(circleTaskCurrentPageData.value.length === 0){
+      searchCircleTaskClick()
+    }
+  }
+  if(tab.props.name === 'festival'){
+    if(festivalTaskCurrentPageData.value.length === 0){
+      searchFestivalTaskClick()
+    }
+  }
   if (tab.props.name === 'birth') {
     await getBirthTaskId()
+    if(birthEmailCurrentPageData.value.length === 0){
+      searchBirthEmailClick()
+    }
   }
 }
 // 创建节日任务验证
@@ -1995,6 +2013,11 @@ const createFestivalTaskValidate = async () => {
 onMounted(() => {
   localStorage.removeItem("birthTaskInfo")
   console.log("页面刷新,删除生日邮件任务信息");
+
+  // 页面加载默认请求手动发送任务一次
+  if(manualTaskCurrentPageData.value.length === 0){
+      searchManualTaskClick()
+  }
 })
 
 </script>
@@ -2005,7 +2028,6 @@ onMounted(() => {
 }
 
 .EmailTaskContainer {
-  margin-left: 1em;
   font-size: 15px;
 }
 

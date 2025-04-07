@@ -152,11 +152,11 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { areaApi } from "@/api/dictionary/area.js";
 import { countryApi } from "@/api/dictionary/country.js";
 import { errorHandler } from '@/utils/errorHandler.js'
-import { ElMessage } from 'element-plus'
+import { ElMessage,ElMessageBox } from 'element-plus'
 import SmartPagination from '@/components/SmartPagination.vue'
 import { debounce } from 'lodash'
 import ListDialog from '@/components/ListDialog.vue'
@@ -346,6 +346,10 @@ const debouncedSearchCountry = debounce(chooseSearchCountry, 1000)
 // 修改区域
 const updateArea = async () => {
   try {
+    if(updateAreaForm.value.selectedAreaCountryId.length <= 0){
+      errorHandler.showError("请选择国家", "请选择国家");
+      return;
+    }
     const requestData = {
       area_id: updateAreaForm.value.area_id,
       area_name: updateAreaForm.value.area_name,
@@ -369,7 +373,9 @@ const updateArea = async () => {
         areaPagination.value.cachedData.get(areaPagination.value.serverPage).forEach(item => {
           if(item.area_id === updateAreaForm.value.area_id){
             item.area_name = updateAreaForm.value.area_name
-            item.area_country = updateAreaForm.value.selectedAreaCountryName.length > 0 ? updateAreaForm.value.selectedAreaCountryName : item.area_country
+            const selectedAreas = updateAreaForm.value.countryOptions.filter(
+              country => updateAreaForm.value.selectedAreaCountryId.includes(country.country_id))
+            item.area_country = updateAreaForm.value.selectedAreaCountryName.length > 0 ? selectedAreas : item.area_country
           }
         })
       }
@@ -411,6 +417,17 @@ const debouncedUpdateSearchCountry = debounce(chooseUpdateCountry, 1000)
 // 删除区域
 const deleteArea = async (row) => {
   try {
+    // 先弹窗确认是否删除
+    await ElMessageBox.confirm(
+        '是否确认删除？',
+        '删除确认',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          closeOnClickModal: false,
+        }
+    )
     const requestData = {
       area_id: row.area_id
     }
@@ -431,7 +448,11 @@ const deleteArea = async (row) => {
       errorHandler.showError("删除区域失败,请重试", res);
     }
   } catch (error) {
-    errorHandler.showError("删除区域失败,请重试", error);
+    if (error === 'cancel') {
+      console.log('用户取消了删除操作')
+    } else {
+      errorHandler.showError("删除区域失败,请重试", error);
+    }
   }
 }
 // 重置搜索
@@ -440,7 +461,7 @@ const resetAreaSearch = () => {
     areaName: "",
     areaCode: ""
   };
-  clearAreaCache()
+  //clearAreaCache()
 }
 
 //======================对话框======================
@@ -458,14 +479,16 @@ const openUpdateAreaDialog = (row) => {
   updateAreaForm.value = {
     area_id: row.area_id,
     area_name: row.area_name,
-    selectedAreaCountryId: [],
+    selectedAreaCountryId: row.area_country.map(item => item.country_id),
+    selectedAreaCountryName: row.area_country.map(item => item.country_name),
+    countryOptions: row.area_country
   };
   updateDialogVisible.value = true;
 };
 // 打开查看国家列表对话框
 const openAreaCountryListDialog = (row, type) => {
   areaCountryListDialog.value = true;
-  areaCountryListDetails.value = row[type];
+  areaCountryListDetails.value = row[type].map(item => item.country_name);
   console.log("查看国家列表对话框", areaCountryListDetails.value);
 };
 // 关闭创建对话框
@@ -485,7 +508,12 @@ const closeUpdateAreaDialog = () => {
   updateDialogVisible.value = false;
 };
 
-
+//================================页面初始操作================================
+onMounted(() => {
+  if(areaCurrentPageData.value.length === 0){
+    handleSearchAreaClick()
+  }
+})
 </script>
 
 <style scoped>

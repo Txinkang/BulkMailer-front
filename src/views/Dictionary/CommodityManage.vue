@@ -284,7 +284,7 @@
 
 
 <script setup>
-import { ref, computed, onBeforeUnmount } from "vue";
+import { ref, computed, onBeforeUnmount, onMounted } from "vue";
 import { commodityApi } from "@/api/dictionary/commodity";
 import { errorHandler } from "@/utils/errorHandler";
 import { ElMessage, ElMessageBox } from "element-plus";
@@ -407,15 +407,25 @@ const importCommodity = async (file) => {
     console.log("导入商品文件", file.raw);
     const res = await commodityApi.importCommodity(file.raw)
     if (res.code === 200) {
+      // 处理错误信息，每条错误信息换行显示
+      let errorMsgFormatted = '';
+      if (res.data.errorMsg && Array.isArray(res.data.errorMsg)) {
+        errorMsgFormatted = res.data.errorMsg.map(msg => `&nbsp;&nbsp;&nbsp;&nbsp;${msg}`).join('<br>');
+      } else if (res.data.errorMsg) {
+        errorMsgFormatted = `&nbsp;&nbsp;&nbsp;&nbsp;${res.data.errorMsg}`;
+      }
+      console.log("导入商品错误信息", errorMsgFormatted);
+
       ElMessageBox.alert(
-        `导入商品成功:
-        成功${res.data.success_count}条\n
-        失败${res.data.fail_count}条。
-        \n如果有数据导入失败，原因可能为：商品名称已存在、品类名称不存在`,
+        `导入商品成功:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;成功${res.data.success_count}条<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;失败${res.data.fail_count}条<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;失败原因:<br>${errorMsgFormatted}`,
         '导入结果',
         {
           type: 'success',
-          confirmButtonText: '确定'
+          confirmButtonText: '确定',
+          dangerouslyUseHTMLString: true // 允许使用HTML
         }
       )
       console.log("导入商品成功", res);
@@ -623,6 +633,17 @@ const debouncedUpdateSearchCategory = debounce(chooseUpdateCategory, 1000)
 // 删除商品
 const deleteCommodity = async (row) => {
   try {
+    // 先弹窗确认是否删除
+    await ElMessageBox.confirm(
+        '是否确认删除？',
+        '删除确认',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          closeOnClickModal: false,
+        }
+    )
     const requestData = {
       commodity_id: row.commodity_id
     }
@@ -641,14 +662,18 @@ const deleteCommodity = async (row) => {
       errorHandler.showError("删除商品失败,请重试", res);
     }
   } catch (error) {
-    errorHandler.showError("删除商品失败,请重试", error);
+    if (error === 'cancel') {
+      console.log('用户取消了删除操作')
+    } else {
+      errorHandler.showError("删除商品失败,请重试", error);
+    }
   }
 }
 // 重置商品搜索条件
 const resetCommoditySearch = () => {
   searchCommodityForm.value.commodity_name = "";
   searchCommodityForm.value.category_id = "";
-  clearCommodityCache()
+  //clearCommodityCache()
 }
 
 // 品类
@@ -658,15 +683,25 @@ const importCategory = async (file) => {
     console.log("导入品类文件", file.raw);
     const res = await commodityApi.importCategory(file.raw)
     if (res.code === 200) {
+      // 处理错误信息，每条错误信息换行显示
+      let errorMsgContent = '';
+      if (res.data.errorMsg && Array.isArray(res.data.errorMsg)) {
+        errorMsgContent = `<br>&nbsp;&nbsp;&nbsp;&nbsp;失败原因:<br>${res.data.errorMsg.map(msg => `&nbsp;&nbsp;&nbsp;&nbsp;${msg}`).join('<br>')}`;
+      } else if (res.data.errorMsg) {
+        errorMsgContent = `<br>&nbsp;&nbsp;&nbsp;&nbsp;失败原因: ${res.data.errorMsg}`;
+      } else {
+        errorMsgContent = '<br>&nbsp;&nbsp;&nbsp;&nbsp;如果有数据导入失败，原因可能为：品类名称已存在';
+      }
+
       ElMessageBox.alert(
-        `导入品类成功:
-        成功${res.data.success_count}条\n
-        失败${res.data.fail_count}条。
-        \n如果有数据导入失败，原因可能为：品类名称已存在`,
+        `导入品类成功:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;成功${res.data.success_count}条<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;失败${res.data.fail_count}条${errorMsgContent}`,
         '导入结果',
         {
           type: 'success',
-          confirmButtonText: '确定'
+          confirmButtonText: '确定',
+          dangerouslyUseHTMLString: true // 允许使用HTML
         }
       )
       console.log("导入品类成功", res);
@@ -772,6 +807,17 @@ const updateCategory = async () => {
 // 删除品类
 const deleteCategory = async (row) => {
   try {
+    // 先弹窗确认是否删除
+    await ElMessageBox.confirm(
+        '删除品类将删除该品类下所有商品，是否确认删除？',
+        '删除确认',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          closeOnClickModal: false,
+        }
+    )
     const requestData = {
       category_id: row.category_id
     }
@@ -790,14 +836,18 @@ const deleteCategory = async (row) => {
       errorHandler.showError("删除品类失败,请重试", res);
     }
   } catch (error) {
-    errorHandler.showError("删除品类失败,请重试", error);
+    if (error === 'cancel') {
+      console.log('用户取消了删除操作')
+    } else {
+      errorHandler.showError("删除品类失败,请重试", error);
+    }
   }
 }
 
 // 重置品类搜索条件
 const resetCategorySearch = () => {
   searchCategoryName.value = "";
-  clearCategoryCache()
+  //clearCategoryCache()
 }
 
 //======================对话框======================
@@ -852,7 +902,15 @@ const closeUpdateCategoryDialog = () => {
 };
 
 
-
+//================================页面初始操作================================
+onMounted(() => {
+  if(commodityCurrentPageData.value.length === 0){
+    handleSearchCommodityClick()
+  }
+  if(categoryCurrentPageData.value.length === 0){
+    handleSearchCategoryClick()
+  }
+})
 // 组件卸载时取消未执行的防抖函数
 onBeforeUnmount(() => {
   debouncedSearchCategory.cancel()

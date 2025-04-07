@@ -105,7 +105,7 @@
 
           <!-- 表格 -->
           <div style="width: 100%;overflow-x: auto">
-            <el-table :data="attachmentCurrentPageData" border style="width: 1000px">
+            <el-table :data="attachmentCurrentPageData" border style="width: 1200px">
               <!-- 附件名称列 -->
               <el-table-column show-overflow-tooltip label="附件名称" align="left" min-width="300">
                 <template #default="{ row }">
@@ -282,7 +282,7 @@
 
           <!-- 表格 -->
           <div style="width: 100%;overflow-x: auto">
-            <el-table :data="imgCurrentPageData" border style="width: 1000px">
+            <el-table :data="imgCurrentPageData" border style="width: 1200px">
               <!-- 图片名称列 -->
               <el-table-column show-overflow-tooltip label="图片名称" align="left" min-width="300">
                 <template #default="{ row }">
@@ -443,7 +443,7 @@
 </template>
 
 <script setup>
-import {ref, computed } from "vue";
+import {ref, computed, onMounted } from "vue";
 import { ElMessage, ElMessageBox, ElLoading } from 'element-plus'
 import { errorHandler } from '@/utils/errorHandler.js'
 import { fileApi } from '@/api/file/file.js'
@@ -763,8 +763,8 @@ const handleUserRemove = (user) => {
 // 配置上传路径
 const uploadAttachmentUrl = import.meta.env.VITE_UPLOAD_ATTACHMENT_BASE_URL
 const uploadImgUrl = import.meta.env.VITE_UPLOAD_IMG_BASE_URL
-//  const uploadAttachmentUrl = "http://112.35.176.43:9901/attachments"
-//  const uploadImgUrl = "http://112.35.176.43:9901/imgs"
+// const uploadAttachmentUrl = "http://112.35.176.43:9901/attachments"
+// const uploadImgUrl = "http://112.35.176.43:9901/imgs"
 // 添加进度状态
 const uploadProgress = ref({})
 const downloadProgress = ref({})
@@ -834,18 +834,37 @@ const handleAttachmentChange = (uploadFile) => {
 };
 
 // 上传附件列表删除
-const handleRemoveAttachment = (file) => {
-  // 如果文件正在上传，取消上传
-  if (uploadXHRs.value[file.name]) {
-    console.log('Canceling upload for:', file.name)
-    uploadXHRs.value[file.name].abort()
-    delete uploadXHRs.value[file.name]
-    delete uploadProgress.value[file.name]
-  }
+const handleRemoveAttachment = async (file) => {
+  try{
+    // 先弹窗确认是否删除
+    await ElMessageBox.confirm(
+        '是否确认删除？',
+        '删除确认',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          closeOnClickModal: false,
+        }
+    )
+    // 如果文件正在上传，取消上传
+    if (uploadXHRs.value[file.name]) {
+        console.log('Canceling upload for:', file.name)
+        uploadXHRs.value[file.name].abort()
+        delete uploadXHRs.value[file.name]
+        delete uploadProgress.value[file.name]
+      }
 
-  // 从附件列表中移除指定文件
-  attachments.value = attachments.value.filter(f => f.name !== file.name)
-  ElMessage.success('已取消上传并移除文件')
+    // 从附件列表中移除指定文件
+    attachments.value = attachments.value.filter(f => f.name !== file.name)
+    ElMessage.success('已取消上传并移除附件')
+  }catch(error){
+    if (error === 'cancel') {
+      console.log('用户取消了删除操作')
+    } else {
+      errorHandler.showError('删除附件出错，请重试',error)
+    }
+  }
 }
 
 // 上传附件处理函数
@@ -982,28 +1001,43 @@ const handleUploadAttachment = async () => {
 // 附件删除
 const handleAttachmentDelete = async (attachmentId) => {
   try {
-    if(attachmentId === null || attachmentId === undefined || attachmentId === ''){
-      ElMessage.error('该附件缺失id,无法删除')
-      return
-    }
-    const requestData = {
-      attachment_id: attachmentId
-    }
-    console.log('删除附件请求数据：', requestData)
-    const response = await fileApi.deleteAttachment(requestData)
-    if (response.code === 200) {
-      const currentData = attachmentPagination.value.cachedData.get(attachmentPagination.value.serverPage)
-        attachmentPagination.value.cachedData.set(
-        attachmentPagination.value.serverPage,
-        currentData.filter(item => item.id !== attachmentId)
+      // 先弹窗确认是否删除
+      await ElMessageBox.confirm(
+        '是否确认删除？',
+        '删除确认',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          closeOnClickModal: false,
+        }
       )
-      attachmentPagination.value.totalItems = attachmentPagination.value.totalItems - 1
-      ElMessage.success('删除成功')
-    }else{
-      errorHandler.showError('删除附件失败，请重试',response)
-    }
+      if(attachmentId === null || attachmentId === undefined || attachmentId === ''){
+        ElMessage.error('该附件缺失id,无法删除')
+        return
+      }
+      const requestData = {
+        attachment_id: attachmentId
+      }
+      console.log('删除附件请求数据：', requestData)
+      const response = await fileApi.deleteAttachment(requestData)
+      if (response.code === 200) {
+        const currentData = attachmentPagination.value.cachedData.get(attachmentPagination.value.serverPage)
+          attachmentPagination.value.cachedData.set(
+          attachmentPagination.value.serverPage,
+          currentData.filter(item => item.id !== attachmentId)
+        )
+        attachmentPagination.value.totalItems = attachmentPagination.value.totalItems - 1
+        ElMessage.success('删除成功')
+      }else{
+        errorHandler.showError('删除附件失败，请重试',response)
+      }
   }catch(error){
-    errorHandler.showError('删除附件出错，请重试',error)
+    if (error === 'cancel') {
+      console.log('用户取消了删除操作')
+    } else {
+      errorHandler.showError('删除附件操作出错', error)
+    }
   }
 }
 
@@ -1110,7 +1144,7 @@ const handleAttachmentSearchClick = async () => {
 
 // 重置按钮点击事件
 const handleAttachmentReset = () => {
-  clearAttachmentCache() // 清除缓存
+  //clearAttachmentCache() // 清除缓存
   searchAttachmentForm.value = {
     attachment_name: null,
     creator_name: null,
@@ -1133,18 +1167,37 @@ const handleImgChange = (uploadFile) => {
 };
 
 // 上传图片列表删除
-const handleRemoveImg = (file) => {
-  // 如果文件正在上传，取消上传
-  if (uploadXHRs.value[file.name]) {
-    console.log('Canceling upload for:', file.name)
-    uploadXHRs.value[file.name].abort()
-    delete uploadXHRs.value[file.name]
-    delete uploadProgress.value[file.name]
-  }
+const handleRemoveImg = async (file) => {
+  try{
+    // 先弹窗确认是否删除
+    await ElMessageBox.confirm(
+        '是否确认删除？',
+        '删除确认',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          closeOnClickModal: false,
+        }
+    )
+    // 如果文件正在上传，取消上传
+    if (uploadXHRs.value[file.name]) {
+        console.log('Canceling upload for:', file.name)
+        uploadXHRs.value[file.name].abort()
+        delete uploadXHRs.value[file.name]
+        delete uploadProgress.value[file.name]
+      }
 
-  // 从图片列表中移除指定文件
-  imgs.value = imgs.value.filter(f => f.name !== file.name)
-  ElMessage.success('已取消上传并移除文件')
+    // 从附件列表中移除指定文件
+    imgs.value = imgs.value.filter(f => f.name !== file.name)
+    ElMessage.success('已取消上传并移除图片')
+  }catch(error){
+    if (error === 'cancel') {
+      console.log('用户取消了删除操作')
+    } else {
+      errorHandler.showError('删除图片出错，请重试',error)
+    }
+  }
 }
 
 // 上传图片处理函数
@@ -1282,6 +1335,17 @@ const handleUploadImg = async () => {
 // 图片删除
 const handleImgDelete = async (imgId) => {
   try {
+    // 先弹窗确认是否删除
+    await ElMessageBox.confirm(
+        '是否确认删除？',
+        '删除确认',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          closeOnClickModal: false,
+        }
+      )
     if(imgId === null || imgId === undefined || imgId === ''){
       ElMessage.error('该图片缺失id,无法删除')
       return
@@ -1303,7 +1367,11 @@ const handleImgDelete = async (imgId) => {
       errorHandler.showError('删除图片失败，请重试',response)
     }
   }catch(error){
-    errorHandler.showError('删除图片出错，请重试',error)
+    if (error === 'cancel') {
+      console.log('用户取消了删除操作')
+    } else {
+      errorHandler.showError('删除图片操作出错', error)
+    }
   }
 }
 
@@ -1407,7 +1475,7 @@ const handleImgSearchClick = async () => {
 
 // 图片重置
 const handleImgReset = () => {
-  clearImgCache()
+  //clearImgCache()
   searchImgForm.value = {
     img_name: null,
     creator_name: null,
@@ -1456,8 +1524,15 @@ const closeImgUploadDialog = () => {
   imgs.value = []; // 清空文件列表
 };
 
-
-
+//================================页面初始操作================================
+onMounted(() => {
+  if(attachmentCurrentPageData.value.length === 0){
+    handleAttachmentSearchClick()
+  }
+  if(imgCurrentPageData.value.length === 0){
+    handleImgSearchClick()
+  }
+})
 </script>
 
 <style scoped>

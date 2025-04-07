@@ -86,7 +86,7 @@
 
         <!-- 表格 -->
         <div style="width: 100%;overflow-x: auto">
-          <el-table :data="emailTaskCurrentPageData" border style="width: 1000px;margin-bottom: 2em">
+          <el-table :data="emailTaskCurrentPageData" border style="width: 1200px;margin-bottom: 2em">
             <!-- 主题列 -->
             <el-table-column label="主题" min-width="120px">
               <template #default="{ row }">
@@ -307,9 +307,10 @@
               <!-- 未送达详情列 -->
               <el-table-column label="未送达详情"  min-width="300px" show-overflow-tooltip>
                 <template #default="{ row }">
-                  <span v-if="row.email_status === statusData.EMAIL_STATUS_SUCCESS">{{ error_msg.EMAIL_STATUS_SUCCESS }}</span>
+                  {{ row.error_msg }}
+                  <!-- <span v-if="row.email_status === statusData.EMAIL_STATUS_SUCCESS">{{ error_msg.EMAIL_STATUS_SUCCESS }}</span>
                   <span v-if="row.email_status === statusData.EMAIL_STATUS_FAILED">{{ error_msg.EMAIL_STATUS_FAILED }}</span>
-                  <span v-if="row.email_status === statusData.EMAIL_STATUS_BOUNCE">{{ error_msg.EMAIL_STATUS_BOUNCE }}</span>
+                  <span v-if="row.email_status === statusData.EMAIL_STATUS_BOUNCE">{{ error_msg.EMAIL_STATUS_BOUNCE }}</span> -->
                 </template>
               </el-table-column>
             </el-table>
@@ -434,7 +435,7 @@
 
         <!-- 表格 -->
         <div style="width: 100%;display: flex;overflow-x: auto">
-          <el-table :data="undeliveredCurrentPageData" border style="width: 1000px;margin-bottom: 2em">
+          <el-table :data="undeliveredCurrentPageData" border style="width: 1200px;margin-bottom: 2em">
             <!-- 主题列 -->
             <el-table-column label="主题" min-width="200" show-overflow-tooltip>
               <template #default="{ row }">
@@ -505,9 +506,10 @@
             <!-- 未送达详情列 -->
             <el-table-column label="未送达详情" min-width="200" show-overflow-tooltip>
               <template #default="{ row }">
-                  <span v-if="row.email_status === statusData.EMAIL_STATUS_SUCCESS">{{ error_msg.EMAIL_STATUS_SUCCESS }}</span>
+                {{ row.error_msg }}
+                  <!-- <span v-if="row.email_status === statusData.EMAIL_STATUS_SUCCESS">{{ error_msg.EMAIL_STATUS_SUCCESS }}</span>
                   <span v-if="row.email_status === statusData.EMAIL_STATUS_FAILED">{{ error_msg.EMAIL_STATUS_FAILED }}</span>
-                  <span v-if="row.email_status === statusData.EMAIL_STATUS_BOUNCE">{{ error_msg.EMAIL_STATUS_BOUNCE }}</span>
+                  <span v-if="row.email_status === statusData.EMAIL_STATUS_BOUNCE">{{ error_msg.EMAIL_STATUS_BOUNCE }}</span> -->
                 </template>
             </el-table-column>
 
@@ -582,7 +584,7 @@
 </template>
 
 <script setup>
-import {ref, computed } from "vue";
+import {ref, computed, onMounted } from "vue";
 import {debounce} from "lodash";
 import {emailTypeApi} from "@/api/dictionary/emailType.js";
 import {errorHandler} from "@/utils/errorHandler.js";
@@ -711,14 +713,6 @@ const searchEmailDetailFormRules = {
     }
   ]
 }
-const error_msg = ref({
-  EMAIL_STATUS_SUCCESS: '无',
-  EMAIL_STATUS_FAILED: '服务器应用错误',
-  EMAIL_STATUS_BOUNCE: '1、邮箱发送到达上限。2、发件人邮箱或授权码填写错误。3、收件人邮箱填写错误',
-  RESEND_STATUS_UNRESEND: '无',
-  RESEND_STATUS_SUCCESS: '重发成功',
-  RESEND_STATUS_FAILED: '1、邮箱发送到达上限。2、发件人邮箱或授权码填写错误。3、收件人邮箱填写错误',
-})
 const showSubjectColumn = computed(() => {
   return !emailDetailCurrentPageData.value.some(row => row.task_type === 4)
 })
@@ -871,7 +865,7 @@ const searchAllEmailTask = async () => {
 }
 // 重置邮件任务
 const resetAllEmailTask = () => {
-  clearEmailTaskCache()
+  //clearEmailTaskCache()
   searchAllEmailTaskForm.value = {
     taskType: null, // 任务类型
     subject: '', // 主题名称
@@ -934,7 +928,7 @@ const searchEmailDetail = async () => {
 }
 // 重置邮件详情
 const resetEmailDetail = () => {
-  clearEmailDetailCache()
+  //clearEmailDetailCache()
   searchEmailDetailForm.value = {
     taskId: searchEmailDetailForm.value.taskId, // 任务ID
     subject: null, // 主题名称
@@ -1001,7 +995,7 @@ const searchUndelivered = async () => {
 }
 // 重置未送达邮件
 const resetUndelivered = () => {
-  clearUndeliveredCache()
+  //clearUndeliveredCache()
   undeliveredSearchForm.value = {
     subject: null, // 主题名称
     senderName: null, // 发件人
@@ -1334,12 +1328,19 @@ const getDateByTimestamp = (timestamp) => {
          String(date.getMinutes()).padStart(2, '0') + ':' +
          String(date.getSeconds()).padStart(2, '0')
 }
+
+
+//================================页面初始操作================================
+onMounted(() => {
+  if(emailTaskCurrentPageData.value.length === 0){
+    searchAllEmailTaskClick()
+  }
+  if(undeliveredCurrentPageData.value.length === 0){
+    searchUndeliveredClick()
+  }
+})
 </script>
 <style scoped>
-.mail-container {
-  padding: 20px;
-}
-
 .header {
   display: flex;
   align-items: center;
