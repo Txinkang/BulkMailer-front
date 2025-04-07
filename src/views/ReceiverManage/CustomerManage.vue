@@ -23,7 +23,7 @@
         <div>
           <el-form style="display: flex;flex-flow: row wrap;margin-bottom: 20px;gap: 10px">
             <el-form-item>
-              <el-input v-model="searchCustomerForm.CustomerName" placeholder="请搜索客户名称" clearable style="width:200px;margin-right: 10px">
+              <el-input v-model="searchCustomerForm.customerName" placeholder="请搜索客户名称" clearable style="width:200px;margin-right: 10px">
               </el-input>
             </el-form-item>
             <el-form-item>
@@ -88,7 +88,7 @@
               </el-select>
             </el-form-item>
             <el-form-item>
-              <el-select v-model="searchCustomerForm.CustomerLevel" style="width:200px;margin-right: 10px" clearable placeholder="客户等级">
+              <el-select v-model="searchCustomerForm.customerLevel" style="width:200px;margin-right: 10px" clearable placeholder="客户等级">
                 <el-option label="初级" value="1"></el-option>
                 <el-option label="中级" value="2"></el-option>
                 <el-option label="高级" value="3"></el-option>
@@ -116,20 +116,11 @@
           </el-form>
         </div>
 
-        <!-- 批量分配按钮 -->
+        <!-- 表格 -->
         <div style="display: flex;flex-direction: column">
-          <div v-if="false" style="display: flex;flex-flow: row wrap;gap: 10px;margin: 0 0 20px 0">
-            <el-button type="primary" :disabled="selectedRows.length === 0" @click="openAllAssignCustomerDialog">
-              批量分配
-            </el-button>
-            <el-button type="primary" @click="changeBelongUser">
-              所属用户变更
-            </el-button>
-          </div>
-
           <!-- 表格 -->
           <div>
-            <el-table ref="customerTableRef" :data="customerCurrentPageData" border style="width: 1000px">
+            <el-table ref="customerTableRef" :data="customerCurrentPageData" border style="width: 1200px">
               <!-- 客户名称列 -->
               <el-table-column show-overflow-tooltip label="客户名称" align="left" min-width="200">
                 <template #default="{ row }">
@@ -315,10 +306,9 @@
               @click="createCheckCommodityDialog">
               查看
             </el-button>
-            <el-button type="primary" @click="chooseCommodity">添加</el-button>
+            <el-button type="primary" @click="chooseCommodity(true)">添加</el-button>
           </template>
         </el-form-item>
-
 
         <!-- 性别 -->
         <el-form-item label="性别" prop="sex">
@@ -364,20 +354,6 @@
     <!-- 查看列表信息对话框 -->
     <ListDialog :title="详情" v-model="listDialog" :list="listDetails" />
 
-    <!-- 已分配客户详情弹窗 -->
-    <AssignReceiverDetailsDialog
-      v-model="assignCustomerDetailsDialog"
-      :user_id="selectedUserId"
-      :active_name="activeTabName"
-    />
-
-    <!-- 去分配/重新分配弹窗 -->
-    <AssignReceiverDialog
-      v-model="assignCustomerDialogVisible"
-      :user_id="selectedUserId"
-      :active_tab="activeTabName"
-    />
-
     <!-- 选择原料产品信息框 -->
     <ChooseCommodityDialog
       v-model="chooseCommodityDialog"
@@ -392,21 +368,21 @@
       >
         <!-- 客户名称输入框 -->
         <el-form-item label="客户名称" prop="customerName">
-          <el-input v-model="updateCustomerForm.customerName" placeholder="请输入客户名称" clearable/>
+          <el-input v-model="updateCustomerForm.customer_name" placeholder="请输入客户名称" clearable/>
         </el-form-item>
 
         <!-- 联系人输入框 -->
         <el-form-item label="联系人" prop="contactPerson">
-          <el-input v-model="updateCustomerForm.contactPerson" placeholder="请输入联系人" clearable/>
+          <el-input v-model="updateCustomerForm.contact_person" placeholder="请输入联系人" clearable/>
         </el-form-item>
 
         <!-- 联系方式输入框 -->
         <el-form-item label="联系方式" prop="contactWay">
-          <el-input v-model="updateCustomerForm.contactWay" placeholder="请输入联系方式" clearable/>
+          <el-input v-model="updateCustomerForm.contact_way" placeholder="请输入联系方式" clearable/>
         </el-form-item>
 
         <el-form-item label="客户等级" prop="customerLevel">
-          <el-select v-model="updateCustomerForm.customerLevel" placeholder="请选择等级" clearable>
+          <el-select v-model="updateCustomerForm.customer_level" placeholder="请选择等级" clearable>
             <el-option label="初级" :value="1"/>
             <el-option label="中级" :value="2"/>
             <el-option label="高级" :value="3"/>
@@ -414,24 +390,24 @@
         </el-form-item>
 
         <el-form-item label="国家名称" prop="customerCountryId">
-            <el-select
-              v-model="updateCustomerForm.customerCountryId"
-              placeholder="请搜索国家名称"
-              filterable
-              remote
-              :remote-method="debouncedCreateSearchCountry"
-              clearable>
+          <el-select
+            v-model="updateCustomerForm.customer_country_id"
+            :placeholder="updateCustomerForm.customer_country_name || '请选择国家'"
+            filterable
+            remote
+            :remote-method="debouncedUpdateSearchCountry"
+            clearable>
 
-              <el-option
+            <el-option
               v-for="country in updateCustomerForm.countryOptions"
               :key="country.country_id"
               :label="country.country_name"
               :value="country.country_id" />
-            </el-select>
+          </el-select>
         </el-form-item>
 
         <el-form-item label="贸易类型" prop="tradeType">
-          <el-select v-model="updateCustomerForm.tradeType" placeholder="请选择贸易类型" clearable>
+          <el-select v-model="updateCustomerForm.trade_type" placeholder="请选择贸易类型" clearable>
             <el-option label="工厂" :value="1"/>
             <el-option label="贸易商" :value="2"/>
           </el-select>
@@ -440,14 +416,14 @@
         <!-- 商品选择 -->
         <el-form-item label="原料产品" prop="commodityId">
           <template #default="{ }">
-            <span>共 {{ updateCustomerForm.commodityId.length }} 个商品</span>
+            <span>共 {{ updateCustomerForm.commodity.length }} 个商品</span>
             <el-button
               size="mini"
               type="text"
-              @click="createCheckCommodityDialog">
+              @click="updateCheckCommodityDialog">
               查看
             </el-button>
-            <el-button type="primary" @click="chooseCommodity">添加</el-button>
+            <el-button type="primary" @click="chooseCommodity(false)">添加</el-button>
           </template>
         </el-form-item>
 
@@ -493,24 +469,11 @@
       </template>
     </el-dialog>
 
-    <!-- 批量分配客户 -->
-    <AllAssignReceiverDialog
-      v-model="allAssignCustomerDialog"
-      :selectedRows="selectedRows"
-      :active_tab="activeTabName"
-      @clearSelection="clearSelectedRows"
-    />
-
-    <!-- 改变所属用户 -->
-    <ChangeBelongUserDialog
-      v-model="changeBelongUserDialog"
-      :active_tab="activeTabName"
-    />
   </div>
 </template>
 
 <script setup>
-import { ref ,computed} from "vue";
+import { ref ,computed, onMounted} from "vue";
 import {Plus} from "@element-plus/icons-vue";
 import { debounce } from 'lodash';
 import {countryApi} from "@/api/dictionary/country.js";
@@ -520,15 +483,12 @@ import ChooseCommodityDialog from "@/components/ChooseCommodityDialog.vue";
 import ListDialog from "@/components/ListDialog.vue";
 import { ElMessage, ElMessageBox } from 'element-plus';
 import {emailTypeApi} from "@/api/dictionary/emailType.js";
-import statusData from '@/constants/StatusConstantData.js';
-import AssignReceiverDetailsDialog from "@/components/receiver/AssignReceiverDetailsDialog.vue";
-import AssignReceiverDialog from "@/components/receiver/AssignReceiverDialog.vue";
 import SmartPagination from "@/components/SmartPagination.vue";
-import ChangeBelongUserDialog from "@/components/receiver/ChangeBelongUserDialog.vue";
-import AllAssignReceiverDialog from "@/components/receiver/AllAssignReceiverDialog.vue";
 import UserConstantData from "@/constants/UserConstantData.js";
+
 // ========================= 数据 =========================
 const selectedUserId = ref('');
+const isCreate = ref(true);
 //=============== 创建客户 ================
 // 创建客户表单数据
 const createCustomerForm = ref({
@@ -605,33 +565,30 @@ const searchCustomerForm = ref({
   creatorName: '',
   status: null,
 });
+const customerBelongUserList = ref([{id:1,name:'无',value:''},{id:2,name:'公司',value:UserConstantData.companyName},{id:3,name:'个人',value:localStorage.getItem('user_name')}]);
+
 //=============== 修改客户 ================
 const updateCustomerForm = ref({
-  customerName: '',
-  contactPerson: '',
-  contactWay: '',
-  customerLevel: '',
-  customerCountryId: '',
+  customer_name: '',
+  contact_person: '',
+  contact_way: '',
+  customer_level: '',
+  customer_country_id: '',
   countryOptions: [],
-  tradeType: '',
+  customer_country_name: '',
+  trade_type: '',
   commodity: [],
   commodityId: [],
   sex: '',
   birth: '',
   emails: ['']
 })
-const customerBelongUserList = ref([{id:1,name:'无',value:''},{id:2,name:'公司',value:UserConstantData.companyName},{id:3,name:'个人',value:localStorage.getItem('user_name')}]);
 // 邮箱验证规则
 const updateEmailRules = [
   { message: '请输入邮箱地址', trigger: 'blur' },
   { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
 ]
 //=============== 分配用户 ================
-// 状态常量
-const customerStatus = statusData;
-const activeTabName = "customer";
-// 选中行数据
-const selectedRows = ref([]);
 const customerTableRef = ref(null)
 
 // ========================= 分页 =========================
@@ -697,6 +654,7 @@ const importCustomer = async (file) => {
     errorHandler.showError("导入客户失败,请重试", error);
   }
 }
+
 // 创建客户
 const createCustomer = async () => {
   try {
@@ -722,8 +680,6 @@ const createCustomer = async () => {
           ElMessage.success("创建客户成功");
           console.log("创建客户成功", res);
           closeCreateCustomerDialog()
-          resetSearchCustomer()
-          await searchCustomer()
         } else {
           errorHandler.showError("创建客户失败,请重试。可能是邮箱已被注册，或其他参数不正确。", res);
         }
@@ -733,11 +689,13 @@ const createCustomer = async () => {
     errorHandler.showError("创建客户失败,请重试。可能是邮箱已被注册，或其他参数不正确。", error);
   }
 }
+
 // 搜索客户点击事件
 const searchCustomerClick = () => {
   clearCustomerCache()
   searchCustomer()
 }
+
 // 搜索客户重置
 const resetSearchCustomer = () => {
   searchCustomerForm.value = {
@@ -756,9 +714,10 @@ const resetSearchCustomer = () => {
     creatorName: '',
     status: null,
   }
-  clearCustomerCache()
-  clearSelectedRows()
+  // clearCustomerCache()
+  // clearSelectedRows()
 }
+
 // 搜索客户
 const searchCustomer = async () => {
   try {
@@ -799,12 +758,12 @@ const updateCustomer = async () => {
   try {
     const requestData = {
       customerId: selectedUserId.value,
-      customerName: updateCustomerForm.value.customerName === '' ? null : updateCustomerForm.value.customerName,
-      contactPerson: updateCustomerForm.value.contactPerson === '' ? null : updateCustomerForm.value.contactPerson,
-      contactWay: updateCustomerForm.value.contactWay === '' ? null : updateCustomerForm.value.contactWay,
-      customerLevel: updateCustomerForm.value.customerLevel ? Number(updateCustomerForm.value.customerLevel) : null,
-      customerCountryId: updateCustomerForm.value.customerCountryId === '' ? null : updateCustomerForm.value.customerCountryId,
-      tradeType: updateCustomerForm.value.tradeType ? Number(updateCustomerForm.value.tradeType) : null,
+      customerName: updateCustomerForm.value.customer_name === '' ? null : updateCustomerForm.value.customer_name,
+      contactPerson: updateCustomerForm.value.contact_person === '' ? null : updateCustomerForm.value.contact_person,
+      contactWay: updateCustomerForm.value.contact_way === '' ? null : updateCustomerForm.value.contact_way,
+      customerLevel: updateCustomerForm.value.customer_level ? Number(updateCustomerForm.value.customer_level) : null,
+      customerCountryId: updateCustomerForm.value.customer_country_id === '' ? null : updateCustomerForm.value.customer_country_id,
+      tradeType: updateCustomerForm.value.trade_type ? Number(updateCustomerForm.value.trade_type) : null,
       commodityId: updateCustomerForm.value.commodityId === '' ? null : updateCustomerForm.value.commodityId,
       sex: updateCustomerForm.value.sex === '' ? null : updateCustomerForm.value.sex,
       birth: updateCustomerForm.value.birth ? formatDate(updateCustomerForm.value.birth) : null,
@@ -817,8 +776,9 @@ const updateCustomer = async () => {
       console.log("更新客户响应数据", res);
       closeUpdateCustomerDialog()
       updateCustomerDialog.value = false;
-      resetSearchCustomer()
-      await searchCustomer()
+      // 更新成功后重新搜索
+      resetSearchCustomer();
+      await searchCustomer();
     } else {
       errorHandler.showError("更新客户失败,请重试。可能是邮箱已被注册，或其他参数不正确。", res);
     }
@@ -830,6 +790,17 @@ const updateCustomer = async () => {
 // 删除客户
 const deleteCustomer = async (row) => {
   try {
+    // 先弹窗确认是否删除
+    await ElMessageBox.confirm(
+        '是否确认删除？',
+        '删除确认',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          closeOnClickModal: false,
+        }
+    )
     const requestData = {
       customerId: row.customer_id,
     }
@@ -848,11 +819,16 @@ const deleteCustomer = async (row) => {
       console.log("客户数据缓存", customerPagination.value.cachedData.get(customerPagination.value.serverPage));
     } else {
       errorHandler.showError("删除客户失败,请重试", res);
-      resetSearchCustomer()
-      await searchCustomer()
+      // 删除失败后重新搜索
+      resetSearchCustomer();
+      await searchCustomer();
     }
   } catch (error) {
-    errorHandler.showError("删除客户失败,请重试", error);
+    if (error === 'cancel') {
+      console.log('用户取消了删除操作')
+    } else {
+      errorHandler.showError("删除客户失败,请重试", error);
+    }
   }
 }
 // ========================= 对话框控制 =========================
@@ -861,10 +837,6 @@ const updateCustomerDialog = ref(false);
 const chooseCommodityDialog = ref(false);
 const listDialog = ref(false);
 const listDetails = ref([]);
-const assignCustomerDetailsDialog = ref(false);
-const assignCustomerDialogVisible = ref(false);
-const allAssignCustomerDialog = ref(false);
-const changeBelongUserDialog = ref(false);
 
 // ========================= 对话框操作 =========================
 //===============打开对话框===============
@@ -874,13 +846,43 @@ const openCreateCustomerDialog = () => {
 };
 // 更新客户对话框
 const openUpdateCustomerDialog = (row) => {
-  selectedUserId.value = row.customer_id
+  console.log("更新客户选中行数据", row);
+
+  // 赋值给更新表单
+  updateCustomerForm.value = { ...row };
+  selectedUserId.value = row.customer_id;
+
+  // 显示商品数据
+  updateCustomerForm.value.commodityId = row.commodity.map(item => item.commodityId);
+  updateCustomerForm.value.commodity = row.commodity.map(item => ({
+    commodity_id: item.commodityId,
+    commodity_name: item.commodityName
+  }));
+
+  // 显示国家数据
+  if (row.customer_country_id && row.customer_country_name) {
+    updateCustomerForm.value.customer_country_id = row.customer_country_id;
+    updateCustomerForm.value.countryOptions = [{
+      country_id: row.customer_country_id,
+      country_name: row.customer_country_name
+    }];
+  } else {
+    updateCustomerForm.value.customer_country_id = '';
+    updateCustomerForm.value.countryOptions = [];
+  }
+
+  console.log("更新客户选中行传输数据", updateCustomerForm.value);
   updateCustomerDialog.value = true;
 };
-// 创建客户查看原料产品
+// 创建客户查看商品
 const createCheckCommodityDialog = () => {
   listDialog.value = true;
   listDetails.value = createCustomerForm.value.commodity.map(item => item.commodity_name);
+}
+// 修改客户查看商品
+const updateCheckCommodityDialog = () => {
+  listDialog.value = true;
+  listDetails.value = updateCustomerForm.value.commodity.map(item => item.commodity_name);
 }
 // 查看客户商品列表
 const checkCommodityList = (row,column) => {
@@ -897,25 +899,7 @@ const checkEmailTypeList = (row,column) => {
   listDialog.value = true;
   listDetails.value = row[column];
 }
-// 分配对话框
-const openReassignDialog = (row) => {
-  selectedUserId.value = row.customer_id
-  assignCustomerDialogVisible.value = true;
-};
-// 分配详情对话框
-const openAssignmentDetails = (row) => {
-  selectedUserId.value = row.customer_id;
-  assignCustomerDetailsDialog.value = true;
-};
-// 批量分配客户
-const openAllAssignCustomerDialog = () => {
-  allAssignCustomerDialog.value = true;
-  console.log("批量分配客户选中客户id", selectedRows.value);
-}
-// 改变所属用户
-const changeBelongUser = () => {
-  changeBelongUserDialog.value = true;
-}
+
 
 
 //===============关闭对话框===============
@@ -940,12 +924,14 @@ const closeCreateCustomerDialog = () => {
 // 更新客户对话框
 const closeUpdateCustomerDialog = () => {
   updateCustomerForm.value = {
-    customerName: '',
-    contactPerson: '',
-    contactWay: '',
-    customerLevel: '',
-    customerCountryId: '',
-    tradeType: '',
+    customer_name: '',
+    contact_person: '',
+    contact_way: '',
+    customer_level: '',
+    customer_country_id: '',
+    countryOptions: [],
+    customer_country_name: '',
+    trade_type: '',
     commodity: [],
     commodityId: [],
     sex: '',
@@ -972,22 +958,26 @@ const addUpdateEmailInput = () => {
   updateCustomerForm.value.emails.push('')
 }
 // 选择商品
-const chooseCommodity = () => {
+const chooseCommodity = (create) => {
   chooseCommodityDialog.value = true;
+  console.log("选择商品", create);
+  if(create){
+    isCreate.value = true;
+  }else{
+    isCreate.value = false;
+  }
 };
 //子组件搜索商品回调函数
 const handleCommodityConfirm = async (selectedCommodities, selectedIds) => {
-  createCustomerForm.value.commodity = selectedCommodities;
-  createCustomerForm.value.commodityId = selectedIds;
-  console.log("创建客户选择商品", createCustomerForm.value.commodity, createCustomerForm.value.commodityId);
-}
-// 处理表格选中变化
-const handleSelectionChange = (rows) => {
-  selectedRows.value = rows.map(row => row.customer_id)
-}
-const clearSelectedRows = () => {
-  customerTableRef.value.clearSelection()
-  selectedRows.value = []
+  if(isCreate.value){
+    createCustomerForm.value.commodity = selectedCommodities;
+    createCustomerForm.value.commodityId = selectedIds;
+    console.log("创建客户选择商品", createCustomerForm.value.commodity, createCustomerForm.value.commodityId);
+  }else{
+    updateCustomerForm.value.commodity = selectedCommodities;
+    updateCustomerForm.value.commodityId = selectedIds;
+    console.log("修改客户选择商品", updateCustomerForm.value.commodity, updateCustomerForm.value.commodityId);
+  }
 }
 
 //======================输入框搜索事件======================
@@ -1016,6 +1006,31 @@ const chooseCreateCountry = async (query) => {
 }
 const debouncedCreateSearchCountry = debounce(chooseCreateCountry, 500)
 
+// 修改客户选择国家
+const chooseUpdateCountry = async (query) => {
+  try {
+    const requestData = {
+      country_name: query,
+      country_code: '',
+      page_num: 1,
+      page_size: 100
+    }
+    console.log("搜索国家请求数据", requestData);
+    const res = await countryApi.filterCountry(requestData)
+    if (res.code === 200) {
+      // 将国家数据缓存
+      updateCustomerForm.value.countryOptions = res.data.country
+      console.log("修改客户选择国家响应数据", res);
+      console.log("修改客户选择国家缓存数据", updateCustomerForm.value.countryOptions);
+    } else {
+      errorHandler.showError("搜索国家失败,请重试", res);
+    }
+  } catch (error) {
+    errorHandler.showError("搜索国家失败,请重试", error);
+  }
+}
+const debouncedUpdateSearchCountry = debounce(chooseUpdateCountry, 500)
+
 // 搜索客户选择国家
 const chooseSearchCountry = async (query) => {
   try {
@@ -1041,7 +1056,7 @@ const chooseSearchCountry = async (query) => {
 }
 const debouncedSearchCountry = debounce(chooseSearchCountry, 500)
 
-// 搜索客户选择不可接受邮件类型
+// 搜索客户选择可接受邮件类型
 const chooseSearchEmailType = async (query) => {
   try {
     const requestData = {
@@ -1049,30 +1064,31 @@ const chooseSearchEmailType = async (query) => {
       page_num: 1,
       page_size: 30
     }
-    console.log("搜索不可接受邮件类型请求数据", requestData);
+    console.log("搜索可接受邮件类型请求数据", requestData);
     const res = await emailTypeApi.filterEmailType(requestData)
     if (res.code === 200) {
       searchCustomerForm.value.emailTypeOptions = res.data.email_type
-      console.log("搜索客户选择不可接受邮件类型响应数据", res);
-      console.log("搜索客户选择不可接受邮件类型缓存数据", searchCustomerForm.value.emailTypeOptions);
+      console.log("搜索客户选择可接受邮件类型响应数据", res);
+      console.log("搜索客户选择可接受邮件类型缓存数据", searchCustomerForm.value.emailTypeOptions);
     } else {
-      errorHandler.showError("搜索不可接受邮件类型失败,请重试", res);
+      errorHandler.showError("搜索可接受邮件类型失败,请重试", res);
     }
   } catch (error) {
-    errorHandler.showError("搜索不可接受邮件类型失败,请重试", error);
+    errorHandler.showError("搜索可接受邮件类型失败,请重试", error);
   }
 }
 const debouncedSearchEmailType = debounce(chooseSearchEmailType, 500)
 
 
-
+//================================页面初始操作================================
+onMounted(() => {
+  if(customerCurrentPageData.value.length === 0){
+    searchCustomerClick()
+  }
+})
 </script>
 
 <style scoped>
-.company-container {
-  padding: 20px;
-}
-
 .button-group{
   display: flex;
   flex-flow: row nowrap;

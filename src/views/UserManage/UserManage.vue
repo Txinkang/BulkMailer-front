@@ -43,7 +43,7 @@
 
         <!-- 表格 -->
         <div style="width: 100%;overflow-x: auto">
-          <el-table :data="userCurrentPageData" border style="width: 1000px">
+          <el-table :data="userCurrentPageData" border style="width: 1200px">
             <!-- 用户名称列 -->
             <el-table-column label="用户名称" align="left" min-width="100">
               <template #default="{ row }">
@@ -111,7 +111,7 @@
 
         <!-- 表格 -->
         <div style="width: 100%;overflow-x: auto">
-          <el-table :data="tableData" border style="width: 1000px">
+          <el-table :data="tableData" border style="width: 1200px">
             <!-- 用户名称列 -->
             <el-table-column label="用户名称" align="left" min-width="100">
               <template #default="{ row }">
@@ -121,7 +121,7 @@
             <!-- 所属用户列 -->
             <el-table-column label="所属用户" align="left" min-width="100">
               <template #default="{ row }">
-                <span>张三</span>
+                <span>{{ row.belong_user_name }}</span>
               </template>
             </el-table-column>
             <!-- 邮箱列 -->
@@ -149,8 +149,8 @@
             <!-- 查看按钮列 -->
             <el-table-column label="操作" align="center" min-width="200">
               <template #default="{ row }">
-                <el-button type="primary" size="small" @click="openFakeUserDialog">查看</el-button>
-                <el-button type="warning" size="small" @click="openUpdateFakeUserDialog">修改</el-button>
+                <el-button type="primary" size="small" @click="openFakeUserDialog(row)">查看</el-button>
+                <el-button type="warning" size="small" @click="openUpdateFakeUserDialog(row)">修改</el-button>
                 <el-button type="danger" size="small">删除</el-button>
               </template>
             </el-table-column>
@@ -342,12 +342,11 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { userApi } from '@/api/user/user.js';
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElMessageBox } from 'element-plus';
 import { errorHandler } from '@/utils/errorHandler.js';
 import SmartPagination from '@/components/SmartPagination.vue'
-import statusData from '@/constants/StatusConstantData.js';
 import AssignUserDialog from '@/components/user/AssignUserDialog.vue';
 import AssignUserDetailsDialog from '@/components/user/AssignUserDetailsDialog.vue';
 import CheckUserPasswordDialog from '@/components/user/CheckUserPasswordDialog.vue';
@@ -355,8 +354,6 @@ import UpdateUserDialog from '@/components/user/UpdateUserDialog.vue';
 import UpdateUserAuthDialog from '@/components/user/UpdateUserAuthDialog.vue';
 
 //======================数据======================
-// 状态常量
-const userStatus = statusData;
 //创建用户
 const createUserForm = ref({
   user_role: null,
@@ -454,8 +451,28 @@ const importUser = async (file) => {
   try {
     const response = await userApi.importUser(file.raw);
     if (response.code === 200) {
-      ElMessage.success("导入成功");
-      console.log("导入用户成功,响应数据", response);
+      console.log("导入用户响应数据", response);
+      // 处理错误信息，每条错误信息换行显示
+      let errorMsgContent = '';
+      if (response.data.errorMsg && Array.isArray(response.data.errorMsg)) {
+        errorMsgContent = `<br>&nbsp;&nbsp;&nbsp;&nbsp;失败原因:<br>${response.data.errorMsg.map(msg => `&nbsp;&nbsp;&nbsp;&nbsp;${msg}`).join('<br>')}`;
+      } else if (response.data.errorMsg) {
+        errorMsgContent = `<br>&nbsp;&nbsp;&nbsp;&nbsp;失败原因: ${response.data.errorMsg}`;
+      } else {
+        errorMsgContent = '<br>&nbsp;&nbsp;&nbsp;&nbsp;如果有数据导入失败，原因可能为：角色、邮箱错误';
+      }
+
+      ElMessageBox.alert(
+        `导入用户成功:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;成功${response.data.success_count}条<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;失败${response.data.fail_count}条${errorMsgContent}`,
+        '导入结果',
+        {
+          type: 'success',
+          confirmButtonText: '确定',
+          dangerouslyUseHTMLString: true // 允许使用HTML
+        }
+      )
     } else {
       errorHandler.showError("导入用户失败,请重试", response);
     }
@@ -529,32 +546,6 @@ const searchUser = async () => {
     errorHandler.showError("搜索用户失败,请重试", error);
   }
 }
-// 删除用户
-const deleteUser = async (row) => {
-  try {
-    const requestData = {
-      user_id: row.userId,
-    }
-    console.log("删除用户请求数据", requestData);
-    const response = await userApi.deleteUser(requestData);
-    if (response.code === 200) {
-      ElMessage.success("删除用户成功");
-      // 将用户数据从缓存中删除
-      const currentData = userPagination.value.cachedData.get(userPagination.value.serverPage)
-      userPagination.value.cachedData.set(
-        userPagination.value.serverPage,
-        currentData.filter(item => item.userId !== row.userId)
-      )
-      userPagination.value.totalItems = userPagination.value.totalItems - 1
-      console.log("删除用户响应数据", response);
-      console.log("用户数据缓存", userPagination.value.cachedData.get(userPagination.value.serverPage));
-    } else {
-      errorHandler.showError("删除用户失败,请重试", response);
-    }
-  } catch (error) {
-    errorHandler.showError("删除用户失败,请重试", error);
-  }
-}
 // 重置搜索
 const resetSearchUser = () => {
   searchUserForm.value = {
@@ -564,7 +555,7 @@ const resetSearchUser = () => {
     user_email: "",
     status: null,
   };
-  clearUserCache();
+  //clearUserCache();
 }
 //======================对话框======================
 // 对话框
@@ -608,46 +599,12 @@ const openUpdateUserDialog = (row) => {
   console.log("更新用户ID", selectedUpdateUserId.value);
   updateUserDialog.value = true;
 };
-const openUpdateUserAuthDialog = async (row) => {
-  try {
-    updateUserAuthForm.value.user_id = row.userId;
-    // 先获取所有权限
-    const responseGetAuth = await userApi.getAuth();
-    if (responseGetAuth.code === 200) {
-      console.log("获取所有权限响应数据", responseGetAuth);
-      updateUserAuthForm.value.all_auth = responseGetAuth.data;
-      console.log("获取所有权限表单数据", updateUserAuthForm.value);
-    } else {
-      errorHandler.showError("获取所有权限失败,请重试", responseGetAuth);
-    }
 
-    // 再获取当前用户权限
-    const requestData = {
-      user_id: row.userId,
-    }
-    console.log("获取用户权限请求数据", requestData);
-    const response = await userApi.getUserAuth(requestData);
-    if (response.code === 200) {
-      console.log("获取用户权限响应数据", response);
-      updateUserAuthForm.value.user_auth = response.data;
-      updateUserAuthDialog.value = true;
-      console.log("更新用户权限表单", updateUserAuthForm.value);
-    } else {
-      errorHandler.showError("获取用户权限失败,请重试", response);
-    }
-  } catch (error) {
-    errorHandler.showError("获取用户权限失败,请重试", error);
-  }
-
-};
 const openAssignUserDetails = (row) => {
   selectedAssignUserId.value = row.userId;
   assignUserDetailsDialog.value = true;
 };
-const openReassignUserDialog = (row) => {
-  selectedAssignUserId.value = row.userId;
-  assignUserDialog.value = true;
-};
+
 
 
 // 关闭创建用户对话框
@@ -664,12 +621,16 @@ const clearCreateUserForm = () => {
 const closeCreateUserDialog = () => {
   createUserDialogVisible.value = false;
 }
+
+//================================页面初始操作================================
+onMounted(() => {
+  if(userCurrentPageData.value.length === 0){
+    handleSearchUserClick()
+  }
+})
 </script>
 
 <style scoped>
-.company-container {
-  padding: 20px;
-}
 
 .button-group{
   display: flex;

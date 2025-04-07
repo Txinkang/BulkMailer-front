@@ -135,7 +135,6 @@
             <el-input placeholder="模板名称" v-model="templateName" />
           </div>
 
-          <!-- <EditToolbar :data="templateContent"></EditToolbar> -->
           <RichEditor v-model="templateContent"></RichEditor>
 
         </el-tab-pane>
@@ -143,21 +142,6 @@
 
       <!-- 查看列表信息对话框 -->
       <ListDialog :title="详情" v-model="listDialog" :list="listDetails" />
-
-      <!-- 已分配详情弹窗 -->
-      <AssignFileDetailsDialog
-        v-model="assignTemplateForm.assignTemplateDetailsDialog"
-        :creator="assignTemplateForm.selected_creator_name"
-        :file_id="assignTemplateForm.selected_template_id"
-        :tab_name="assignTemplateForm.active_tab"
-      />
-
-      <!-- 去分配/重新分配弹窗 -->
-      <AssignTemplateDialog
-        v-model="assignTemplateForm.assignTemplateDialog"
-        :file_id="assignTemplateForm.selected_template_id"
-        :active_tab="assignTemplateForm.active_tab"
-      />
 
       <!-- 修改模板对话框 -->
       <el-dialog title="修改模板" v-model="updateDialogVisible" width="40%" :show-close="false" :close-on-click-modal="false">
@@ -227,18 +211,16 @@
 
 
 <script setup>
-import {ref, computed} from "vue";
+import {ref, computed, onMounted} from "vue";
 import RichEditor from "@/components/RichEditor.vue";
 import { emailTypeApi } from "@/api/dictionary/emailType.js";
 import { templateApi } from "@/api/email/template/template.js";
 import { errorHandler } from "@/utils/errorHandler";
 import { debounce } from "lodash";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 import SmartPagination from "@/components/SmartPagination.vue";
 import UserConstantData from "@/constants/UserConstantData.js";
 import ListDialog from "@/components/ListDialog.vue";
-import AssignFileDetailsDialog from "@/components/file/AssignFileDetailsDialog.vue";
-import AssignTemplateDialog from "@/components/template/AssignTemplateDialog.vue";
 // ============================= 数据 =============================
 const templateName = ref("");
 const saveTemplateButton = ref(false);
@@ -252,13 +234,6 @@ const searchTemplateForm = ref({
   belong_user_name: "",
 });
 const templateBelongUserList = ref([{id:1,name:'无',value:''},{id:2,name:'公司',value:UserConstantData.companyName},{id:3,name:'个人',value:localStorage.getItem('user_name')}]);
-const assignTemplateForm = ref({
-  active_tab: "template",
-  selected_template_id: "",
-  selected_creator_name: "",
-  assignTemplateDialog: false,
-  assignTemplateDetailsDialog: false
-});
 const saveTemplateForm = ref({
   template_name: '',
   template_type_id: '',
@@ -288,6 +263,7 @@ const saveTemplateFormRef = ref(null)
 //================================ 功能 =================================
 // 搜索模板点击事件
 const searchTemplateClick = () => {
+  clearTemplateCache()
   searchTemplate();
 }
 // 搜索模板
@@ -326,7 +302,7 @@ const resetSearchTemplate = () => {
     creator_name: "",
     belong_user_name: "",
   }
-  clearTemplateCache();
+  //clearTemplateCache();
 }
 // 查看模板
 const checkTemplate = async (templateId) => {
@@ -432,6 +408,17 @@ const saveTemplate = async () => {
 // 删除模板
 const deleteTemplate = async (templateId) => {
   try {
+    // 先弹窗确认是否删除
+    await ElMessageBox.confirm(
+        '是否确认删除？',
+        '删除确认',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          closeOnClickModal: false,
+        }
+    )
     const requestData = {
       template_id: templateId
     }
@@ -451,7 +438,11 @@ const deleteTemplate = async (templateId) => {
       errorHandler.showError("删除模板失败,请重试", res);
     }
   } catch (error) {
-    errorHandler.showError("删除模板失败,请重试", error);
+    if (error === 'cancel') {
+      console.log('用户取消了删除操作')
+    } else {
+      errorHandler.showError("删除模板失败,请重试", error);
+    }
   }
 }
 
@@ -502,11 +493,6 @@ const updateDialogVisible = ref(false);
 const createDialogVisible = ref(false);
 
 // ===== 打开对话框 =====
-const openBelongUserListDialog = (row,belongUser) => {
-  listDetails.value = row[belongUser];
-  listDialog.value = true;
-}
-
 const openSaveTemplateDialog = () => {
   saveTemplateForm.value.template_name = templateName.value;
   saveTemplateForm.value.template_type_id = '';
@@ -527,20 +513,7 @@ const openCreateDialog = () => {
   createDialogVisible.value = true;
 };
 
-const openAssignmentDetails = (row) => {
-  assignTemplateForm.value.selected_template_id = row.id
-  assignTemplateForm.value.selected_creator_name = row.creator_name
-  assignTemplateForm.value.assignTemplateDetailsDialog = true
-};
-
-const openReassignTemplateDialog = (row) => {
-  assignTemplateForm.value.selected_template_id = row.id
-  assignTemplateForm.value.assignTemplateDialog = true;
-};
-
 // ===== 其他功能 =====
-
-
 // 搜索模板类型
 const chooseSearchTemplateType = async (query) => {
   // 因为模板类型绑定的就是邮件类型，所以直接搜邮件类型吧
@@ -606,7 +579,12 @@ const completeTemplateContent = (templateContent) => {
   return allContent
 }
 
-
+//================================页面初始操作================================
+onMounted(() => {
+  if(templateCurrentPageData.value.length === 0){
+    searchTemplateClick()
+  }
+})
 </script>
 
 

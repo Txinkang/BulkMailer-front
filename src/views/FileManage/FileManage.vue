@@ -85,7 +85,7 @@
 
           <!-- 表格 -->
           <div style="width: 100%;overflow-x: auto">
-            <el-table :data="attachmentCurrentPageData" border style="width: 1000px">
+            <el-table :data="attachmentCurrentPageData" border style="width: 1200px">
               <!-- 附件名称列 -->
               <el-table-column show-overflow-tooltip label="附件名称" align="left" min-width="300">
                 <template #default="{ row }">
@@ -213,7 +213,7 @@
 
           <!-- 表格 -->
           <div style="width: 100%;overflow-x: auto">
-            <el-table :data="imgCurrentPageData" border style="width: 1000px">
+            <el-table :data="imgCurrentPageData" border style="width: 1200px">
               <!-- 图片名称列 -->
               <el-table-column show-overflow-tooltip label="图片名称" align="left" min-width="300">
                 <template #default="{ row }">
@@ -260,99 +260,16 @@
         </el-tab-pane>
       </el-tabs>
 
-      <!-- 查看列表信息对话框 -->
-      <ListDialog :title="详情" v-model="listDialog" :list="listDetails" />
-
-      <!-- 已分配详情弹窗 -->
-      <AssignFileDetailsDialog
-        v-model="detailsDialogVisible"
-        :creator="selectedFileCreatorName"
-        :file_id="selectedFileId"
-        :tab_name="activeTab"
-      />
-      <!-- 去分配/重新分配弹窗 -->
-      <el-dialog title="选择用户" v-model="assignDialogVisible" width="50%" :show-close="false" :close-on-click-modal="false">
-        <el-radio-group v-model="assignType">
-          <el-radio :label="assignUser.companyName"></el-radio>
-          <el-radio :label="assignUser.userName"></el-radio>
-        </el-radio-group>
-        <div v-if="assignType === assignUser.userName" class="user-assign-section">
-          <!-- 搜索框 -->
-          <div>
-            <el-form :inline="true">
-              <el-form-item>
-                <el-input placeholder="请搜索用户姓名" v-model="assignSearchQuery.user_name" clearable></el-input>
-              </el-form-item>
-              <el-form-item>
-                <el-input placeholder="请搜索用户登录账号" v-model="assignSearchQuery.user_account" clearable></el-input>
-              </el-form-item>
-              <el-form-item>
-                <el-input placeholder="请搜索用户邮箱" v-model="assignSearchQuery.user_email" clearable></el-input>
-              </el-form-item>
-              <el-form-item>
-                <el-button type="primary" @click="searchUsers">搜索</el-button>
-                <el-button @click="resetSearch">
-                  <el-icon><Refresh /></el-icon>
-                </el-button>
-              </el-form-item>
-            </el-form>
-          </div>
-
-          <!-- 搜索结果 -->
-          <div>
-            <el-checkbox-group v-model="selectedUserIds">
-              <el-checkbox
-                v-for="user in assignUserCurrentPageData"
-                :key="user.id"
-                v-model="selectedUserIds"
-                :label="user.id"
-                @change="(checked) => handleUserSelect(checked, user)"
-              >
-                {{ user.name }}
-              </el-checkbox>
-            </el-checkbox-group>
-            <SmartPagination
-              v-model:current-page="assignUserPagination.currentPage"
-              :server-page-size="assignSearchQuery.page_size"
-              :display-page-size="assignUserPagination.displayPageSize"
-              :total="assignUserPagination.totalItems"
-              @load-data="handleAssignUserLoadData"
-            />
-          </div>
-
-          <!-- 已选择用户 -->
-          <hr>
-          <h3>已选择用户：</h3>
-          <div class="selected-users">
-            <el-tag
-              v-for="user in selectedUsers"
-              :key="user.id"
-              closable
-              @close="handleUserRemove(user)"
-              class="mx-1"
-            >
-              {{ user.name }}
-            </el-tag>
-          </div>
-        </div>
-        <template #footer>
-          <el-button @click="handleCancelAssign">取消</el-button>
-          <el-button type="primary" @click="handleAssign">确定</el-button>
-        </template>
-      </el-dialog>
     </div>
   </div>
 </template>
 
 <script setup>
-import {ref, computed } from "vue";
+import {ref, computed,onMounted } from "vue";
 import { ElMessage, ElMessageBox, ElLoading} from 'element-plus'
 import { errorHandler } from '@/utils/errorHandler.js'
 import { fileApi } from '@/api/file/file.js'
 import UserConstantData from "@/constants/UserConstantData";
-import statusData from "@/constants/StatusConstantData";
-import ListDialog from '@/components/ListDialog.vue'
-import AssignFileDetailsDialog from '@/components/file/AssignFileDetailsDialog.vue'
 import SmartPagination from '@/components/SmartPagination.vue'
 //======================数据======================
 const tabName = ref({
@@ -378,47 +295,8 @@ const searchImgForm = ref({
 })
 const attachmentBelongUserList = ref([{id:1,name:'无',value:''},{id:2,name:'公司',value:UserConstantData.companyName},{id:3,name:'个人',value:localStorage.getItem('user_name')}]);
 const imgBelongUserList = ref([{id:1,name:'无',value:''},{id:2,name:'公司',value:UserConstantData.companyName},{id:3,name:'个人',value:localStorage.getItem('user_name')}]);
-const listDetails = ref([]);
 
 // =====================分页====================
-// 分配用户
-const assignUserPagination = ref({
-  totalItems: 0,
-  currentPage: 1,
-  serverPage:1,
-  displayPageSize: 5,
-  serverPageSize: 10,
-  cachedData: new Map()
-})
-const assignUserCurrentPageData = computed(() => {
-  const displayPageSize = assignUserPagination.value.displayPageSize  // 5
-  const serverPageSize = assignUserPagination.value.serverPageSize  // 10
-  const pagesPerServerPage = serverPageSize / displayPageSize  // 2
-
-  // 计算当前服务器页码
-  const serverPage = Math.floor((assignUserPagination.value.currentPage - 1) / pagesPerServerPage) + 1
-  // 获取当前服务器页的数据
-  const currentServerData = assignUserPagination.value.cachedData.get(serverPage) || []
-  // 计算在当前服务器页内的偏移量
-  const offset = ((assignUserPagination.value.currentPage - 1) % pagesPerServerPage) * displayPageSize
-  return currentServerData.slice(offset, offset + displayPageSize)
-})
-const handleAssignUserLoadData = async (serverPage) => {
-  console.log('分配用户分页组件计算出的页码：', serverPage)
-  if(assignUserPagination.value.cachedData.has(serverPage)){
-    console.log('使用缓存数据，页码：', serverPage)
-    return
-  }
-  assignUserPagination.value.serverPage = serverPage
-  await searchUsers()
-}
-const clearAssignUserCache = () => {
-  assignUserPagination.value.cachedData.clear()
-  assignUserPagination.value.totalItems = 0
-  assignUserPagination.value.currentPage = 1
-  assignUserPagination.value.serverPage = 1
-}
-
 // 附件
 const attachmentPagination = ref({
   totalItems: 0,
@@ -510,25 +388,6 @@ const clearImgCache = () => {
 }
 
 
-// 分配管理数据
-const assignUser = ref({
-  companyName: UserConstantData.companyName,
-  companyId: UserConstantData.companyId,
-  userName: UserConstantData.userName
-});
-const selectedFileIds = ref(null);
-const assignType = ref(assignUser.value.companyName);
-const assignSearchQuery = ref({
-  user_name: null,
-  user_account: null,
-  user_email: null,
-});
-const selectedUsers = ref([]);
-const selectedUserIds = ref([]);
-const selectedFileCreatorName = ref('');
-const selectedFileId = ref('');
-
-
 //======================上传、下载文件======================
 // 配置上传路径
 const uploadAttachmentUrl = import.meta.env.VITE_UPLOAD_ATTACHMENT_BASE_URL
@@ -602,18 +461,37 @@ const handleAttachmentChange = (uploadFile) => {
 };
 
 // 上传附件列表删除
-const handleRemoveAttachment = (file) => {
-  // 如果文件正在上传，取消上传
-  if (uploadXHRs.value[file.name]) {
-    console.log('Canceling upload for:', file.name)
-    uploadXHRs.value[file.name].abort()
-    delete uploadXHRs.value[file.name]
-    delete uploadProgress.value[file.name]
-  }
+const handleRemoveAttachment = async (file) => {
+  try{
+    // 先弹窗确认是否删除
+    await ElMessageBox.confirm(
+        '是否确认删除？',
+        '删除确认',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          closeOnClickModal: false,
+        }
+    )
+    // 如果文件正在上传，取消上传
+    if (uploadXHRs.value[file.name]) {
+        console.log('Canceling upload for:', file.name)
+        uploadXHRs.value[file.name].abort()
+        delete uploadXHRs.value[file.name]
+        delete uploadProgress.value[file.name]
+      }
 
-  // 从附件列表中移除指定文件
-  attachments.value = attachments.value.filter(f => f.name !== file.name)
-  ElMessage.success('已取消上传并移除文件')
+    // 从附件列表中移除指定文件
+    attachments.value = attachments.value.filter(f => f.name !== file.name)
+    ElMessage.success('已取消上传并移除文件')
+  }catch(error){
+    if (error === 'cancel') {
+      console.log('用户取消了删除操作')
+    } else {
+      errorHandler.showError('删除附件出错，请重试',error)
+    }
+  }
 }
 
 // 上传附件处理函数
@@ -751,6 +629,17 @@ const handleUploadAttachment = async () => {
 // 附件删除
 const handleAttachmentDelete = async (attachmentId) => {
   try {
+    // 先弹窗确认是否删除
+    await ElMessageBox.confirm(
+        '是否确认删除？',
+        '删除确认',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          closeOnClickModal: false,
+        }
+    )
     if(attachmentId === null || attachmentId === undefined || attachmentId === ''){
       ElMessage.error('该附件缺失id,无法删除')
       return
@@ -772,7 +661,11 @@ const handleAttachmentDelete = async (attachmentId) => {
       errorHandler.showError('删除附件失败，请重试',response)
     }
   }catch(error){
-    errorHandler.showError('删除附件出错，请重试',error)
+    if (error === 'cancel') {
+      console.log('用户取消了删除操作')
+    } else {
+      errorHandler.showError('删除附件操作出错', error)
+    }
   }
 }
 
@@ -879,7 +772,7 @@ const handleAttachmentSearchClick = async () => {
 
 // 重置按钮点击事件
 const handleAttachmentReset = () => {
-  clearAttachmentCache() // 清除缓存
+  //clearAttachmentCache() // 清除缓存
   searchAttachmentForm.value = {
     attachment_name: null,
     creator_name: null,
@@ -902,18 +795,37 @@ const handleImgChange = (uploadFile) => {
 };
 
 // 上传图片列表删除
-const handleRemoveImg = (file) => {
-  // 如果文件正在上传，取消上传
-  if (uploadXHRs.value[file.name]) {
-    console.log('Canceling upload for:', file.name)
-    uploadXHRs.value[file.name].abort()
-    delete uploadXHRs.value[file.name]
-    delete uploadProgress.value[file.name]
-  }
+const handleRemoveImg = async (file) => {
+  try{
+    // 先弹窗确认是否删除
+    await ElMessageBox.confirm(
+        '是否确认删除？',
+        '删除确认',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          closeOnClickModal: false,
+        }
+    )
+    // 如果文件正在上传，取消上传
+    if (uploadXHRs.value[file.name]) {
+        console.log('Canceling upload for:', file.name)
+        uploadXHRs.value[file.name].abort()
+        delete uploadXHRs.value[file.name]
+        delete uploadProgress.value[file.name]
+      }
 
-  // 从图片列表中移除指定文件
-  imgs.value = imgs.value.filter(f => f.name !== file.name)
-  ElMessage.success('已取消上传并移除文件')
+    // 从附件列表中移除指定文件
+    imgs.value = imgs.value.filter(f => f.name !== file.name)
+    ElMessage.success('已取消上传并移除图片')
+  }catch(error){
+    if (error === 'cancel') {
+      console.log('用户取消了删除操作')
+    } else {
+      errorHandler.showError('删除图片出错，请重试',error)
+    }
+  }
 }
 
 // 上传图片处理函数
@@ -1051,6 +963,17 @@ const handleUploadImg = async () => {
 // 图片删除
 const handleImgDelete = async (imgId) => {
   try {
+    // 先弹窗确认是否删除
+    await ElMessageBox.confirm(
+        '是否确认删除？',
+        '删除确认',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          closeOnClickModal: false,
+        }
+    )
     if(imgId === null || imgId === undefined || imgId === ''){
       ElMessage.error('该图片缺失id,无法删除')
       return
@@ -1072,7 +995,11 @@ const handleImgDelete = async (imgId) => {
       errorHandler.showError('删除图片失败，请重试',response)
     }
   }catch(error){
-    errorHandler.showError('删除图片出错，请重试',error)
+    if (error === 'cancel') {
+      console.log('用户取消了删除操作')
+    } else {
+      errorHandler.showError('删除图片出错，请重试',error)
+    }
   }
 }
 
@@ -1176,7 +1103,7 @@ const handleImgSearchClick = async () => {
 
 // 图片重置
 const handleImgReset = () => {
-  clearImgCache()
+  //clearImgCache()
   searchImgForm.value = {
     img_name: null,
     creator_name: null,
@@ -1187,9 +1114,6 @@ const handleImgReset = () => {
 
 
 //======================对话框======================
-const detailsDialogVisible = ref(false);
-const assignDialogVisible = ref(false);
-const listDialog = ref(false);
 //文件管理
 const uploadAttachmentDialog = ref(false);
 const uploadImgDialog = ref(false);
@@ -1202,18 +1126,6 @@ const imgUploadDialog = () => {
   uploadImgDialog.value = true;
 };
 
-const openReassignDialog = (row) => {
-  assignDialogVisible.value = true;
-  selectedFileIds.value = row.id;
-};
-const openBelongUserListDialog = (row, belong_user_name) => {
-  // 先设置数据
-  listDetails.value = row[belong_user_name]
-  // 最后设置显示状态
-  listDialog.value = true
-
-}
-
 
 // 关闭对话框
 const closeAttachmentUploadDialog = () => {
@@ -1225,7 +1137,15 @@ const closeImgUploadDialog = () => {
   imgs.value = []; // 清空文件列表
 };
 
-
+//================================页面初始操作================================
+onMounted(() => {
+  if(attachmentCurrentPageData.value.length === 0){
+    handleAttachmentSearchClick()
+  }
+  if(imgCurrentPageData.value.length === 0){
+    handleImgSearchClick()
+  }
+})
 
 </script>
 

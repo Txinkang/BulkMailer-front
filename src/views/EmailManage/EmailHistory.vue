@@ -85,7 +85,7 @@
 
         <!-- 表格 -->
         <div style="width: 100%;overflow-x: auto">
-          <el-table :data="emailTaskCurrentPageData" border style="width: 1000px;margin-bottom: 2em">
+          <el-table :data="emailTaskCurrentPageData" border style="width: 1200px;margin-bottom: 2em">
             <!-- 主题列 -->
             <el-table-column label="主题" min-width="120px" show-overflow-tooltip>
               <template #default="{ row }">
@@ -431,7 +431,7 @@
 
         <!-- 表格 -->
         <div style="width: 100%;display: flex;overflow-x: auto">
-          <el-table :data="undeliveredCurrentPageData" border style="width: 1000px;margin-bottom: 2em">
+          <el-table :data="undeliveredCurrentPageData" border style="width: 1200px;margin-bottom: 2em">
             <!-- 主题列 -->
             <el-table-column label="主题" min-width="200" show-overflow-tooltip>
               <template #default="{ row }">
@@ -574,7 +574,7 @@
 </template>
 
 <script setup>
-import {ref, computed } from "vue";
+import {ref, computed, onMounted} from "vue";
 import {debounce} from "lodash";
 import {emailTypeApi} from "@/api/dictionary/emailType.js";
 import {errorHandler} from "@/utils/errorHandler.js";
@@ -703,11 +703,6 @@ const searchEmailDetailFormRules = {
     }
   ]
 }
-const error_msg = ref({
-  EMAIL_STATUS_SUCCESS: '无',
-  EMAIL_STATUS_FAILED: '未送达',
-  EMAIL_STATUS_BOUNCE: '1、邮箱发送到达上限。2、发件人邮箱或授权码填写错误。3、收件人邮箱填写错误',
-})
 // 未送达邮件搜索条件
 const undeliveredSearchForm = ref({
   subject: '', // 主题名称
@@ -857,7 +852,7 @@ const searchAllEmailTask = async () => {
 }
 // 重置邮件任务
 const resetAllEmailTask = () => {
-  clearEmailTaskCache()
+  //clearEmailTaskCache()
   searchAllEmailTaskForm.value = {
     taskType: null, // 任务类型
     subject: '', // 主题名称
@@ -920,7 +915,7 @@ const searchEmailDetail = async () => {
 }
 // 重置邮件详情
 const resetEmailDetail = () => {
-  clearEmailDetailCache()
+  //clearEmailDetailCache()
   searchEmailDetailForm.value = {
     taskId: searchEmailDetailForm.value.taskId, // 任务ID
     subject: null, // 主题名称
@@ -987,7 +982,7 @@ const searchUndelivered = async () => {
 }
 // 重置未送达邮件
 const resetUndelivered = () => {
-  clearUndeliveredCache()
+  //clearUndeliveredCache()
   undeliveredSearchForm.value = {
     subject: '', // 主题名称
     senderName: '', // 发件人
@@ -1322,6 +1317,15 @@ const getDateByTimestamp = (timestamp) => {
          String(date.getSeconds()).padStart(2, '0')
 }
 
+//================================页面初始操作================================
+onMounted(() => {
+  if(emailTaskCurrentPageData.value.length === 0){
+    searchAllEmailTaskClick()
+  }
+  if(undeliveredCurrentPageData.value.length === 0){
+    searchUndeliveredClick()
+  }
+})
 </script>
 <style scoped>
 .mail-container {

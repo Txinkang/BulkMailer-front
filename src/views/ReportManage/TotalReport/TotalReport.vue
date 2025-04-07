@@ -33,7 +33,7 @@
     </div>
 
     <!-- 总报表图表 -->
-    <div ref="allChartRef" style="width: 1000px; height: 400px;"></div>
+    <div ref="allChartRef" style="width: 1200px; height: 400px;"></div>
 
     <!-- 单独图表 -->
     <div class="charts-grid">
@@ -399,9 +399,6 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.mail-container {
-  padding: 20px;
-}
 
 .header .tip {
   font-size: small;

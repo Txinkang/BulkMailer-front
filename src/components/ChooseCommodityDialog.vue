@@ -48,16 +48,18 @@
 
     <!-- 筛选结果 -->
     <div class="result-section">
-      <el-checkbox-group v-model="selectedIds" @change="handleSelectionChange">
-        <el-checkbox
-          v-for="item in commodityCurrentPageData"
-          :key="item.commodity_id"
-          :label="item.commodity_name"
-          :value="item.commodity_id"
-        >
-          {{ item.commodity_name }}
-        </el-checkbox>
-      </el-checkbox-group>
+      <el-table
+        ref="multipleTableRef"
+        :data="commodityCurrentPageData"
+        style="width: 100%"
+        border
+        @selection-change="handleTableSelectionChange"
+        :row-key="row => row.commodity_id"
+      >
+        <el-table-column type="selection" width="55" :reserve-selection="true"/>
+        <el-table-column property="commodity_name" label="商品名称" />
+        <el-table-column property="category_name" label="品类" />
+      </el-table>
       <SmartPagination
         v-model:current-page="commodityPagination.currentPage"
         :server-page-size="commodityPagination.serverPageSize"
@@ -94,21 +96,33 @@ const dialogVisible = computed({
 })
 
 // ========================= 数据 =========================
-const selectedIds = ref([]) // 存储选中的 ID
+const multipleTableRef = ref(null)
+const selectedIds = ref([]) // 存储选中的商品ID
 const selectedCommodities = ref([]) // 存储选中的完整对象
 
-// 当选择变化时更新 selectedCommodities
-const handleSelectionChange = (ids) => {
-  selectedCommodities.value = ids.map(id => {
-    // 遍历所有缓存页查找商品
-    let commodity = null;
-    for (const [pageNum, pageData] of commodityPagination.value.cachedData.entries()) {
-      commodity = pageData.find(item => item.commodity_id === id);
-      if (commodity) break; // 找到就退出循环
-    }
-    return commodity;
-  }).filter(Boolean); // 过滤掉可能的 null 值
+// 处理表格选择变化
+const handleTableSelectionChange = (selectedRows) => {
+  // 更新选中的商品列表
+  selectedCommodities.value = selectedRows;
+  // 更新选中的ID列表
+  selectedIds.value = selectedRows.map(item => item.commodity_id);
 }
+
+// 设置表格的选中状态
+const setSelectedRows = () => {
+  if (!multipleTableRef.value) return;
+
+  // 清除所有选择
+  multipleTableRef.value.clearSelection();
+
+  // 选中已选择的行
+  commodityCurrentPageData.value.forEach(row => {
+    if (selectedIds.value.includes(row.commodity_id)) {
+      multipleTableRef.value.toggleRowSelection(row, true);
+    }
+  });
+}
+
 // 搜索表单
 const searchCommodityForm = ref({
   commodity_name: "",
@@ -138,6 +152,11 @@ const searchCommodity = async () => {
       )
       commodityPagination.value.totalItems = res.data.total_items
       console.log("搜索商品响应数据", res);
+
+      // 数据加载完成后，设置选中状态
+      setTimeout(() => {
+        setSelectedRows();
+      }, 0);
     } else {
       errorHandler.showError("搜索商品失败,请重试", res);
     }
@@ -189,9 +208,9 @@ const commodityPagination = ref({
   cachedData: new Map()
 });
 const commodityCurrentPageData = computed(() => {
-  const displayPageSize = commodityPagination.value.displayPageSize  // 10
+  const displayPageSize = commodityPagination.value.displayPageSize  // 5
   const serverPageSize = commodityPagination.value.serverPageSize  // 20
-  const pagesPerServerPage = serverPageSize / displayPageSize  // 2
+  const pagesPerServerPage = serverPageSize / displayPageSize  // 4
 
   // 计算当前服务器页码
   const serverPage = Math.floor((commodityPagination.value.currentPage - 1) / pagesPerServerPage) + 1
@@ -209,7 +228,6 @@ const handleCommodityLoadData = async (serverPage) => {
   }
   commodityPagination.value.serverPage = serverPage
   await searchCommodity()
-
 }
 const clearCommodityCache = () => {
   commodityPagination.value.currentPage = 1;
@@ -217,7 +235,6 @@ const clearCommodityCache = () => {
   commodityPagination.value.cachedData.clear();
   commodityPagination.value.totalItems = 0;
 }
-
 
 // 关闭对话框
 const closeDialog = () => {
@@ -227,8 +244,27 @@ const closeDialog = () => {
 
 // 确认选择
 const confirmSelect = () => {
-  emit('confirm', selectedCommodities.value, selectedIds.value)
-  closeDialog()
+  // 确保selectedCommodities包含完整的对象信息
+  const selectedCommodityObjects = selectedIds.value.map(id => {
+    // 遍历所有缓存页查找商品完整信息
+    for (const [, pageData] of commodityPagination.value.cachedData.entries()) {
+      const commodity = pageData.find(item => item.commodity_id === id);
+      if (commodity) return commodity;
+    }
+    return null;
+  }).filter(Boolean); // 过滤掉可能的 null 值
+
+  emit('confirm', selectedCommodityObjects, selectedIds.value);
+  closeDialog();
 }
+
 </script>
+
+<style scoped>
+.result-section {
+  margin-top: 20px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+</style>
 

@@ -22,7 +22,7 @@ export default defineConfig(({ command, mode }) => {
       proxy: {
         '/api': {
           target: env.VITE_TARGET,
-          // target: 'http://112.35.176.43:9900',
+          //target: 'http://112.35.176.43:9900',
           //target: 'http://localhost:8080',
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api/, ''),
