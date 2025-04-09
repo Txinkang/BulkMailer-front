@@ -392,7 +392,9 @@ const clearImgCache = () => {
 // 配置上传路径
 const uploadAttachmentUrl = import.meta.env.VITE_UPLOAD_ATTACHMENT_BASE_URL
 const uploadImgUrl = import.meta.env.VITE_UPLOAD_IMG_BASE_URL
-// 添加进度状态
+// const uploadAttachmentUrl = "http://112.35.176.43:9901/attachments"
+// const uploadImgUrl = "http://112.35.176.43:9901/imgs"
+// // 添加进度状态
 const uploadProgress = ref({})
 const downloadProgress = ref({})
 const isUploading = ref(false)

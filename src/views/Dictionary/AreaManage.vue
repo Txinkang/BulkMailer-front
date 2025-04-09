@@ -273,7 +273,7 @@ const chooseCreateCountry = async (query) => {
       country_name: query,
       country_code: '',
       page_num: 1,
-      page_size: 10
+      page_size: 100
     }
     console.log("搜索国家请求数据", requestData);
     const res = await countryApi.filterCountry(requestData)
@@ -325,7 +325,7 @@ const chooseSearchCountry = async (query) => {
       country_name: query,
       country_code: '',
       page_num: 1,
-      page_size: 10
+      page_size: 100
     }
     console.log("搜索国家请求数据", requestData);
     const res = await countryApi.filterCountry(requestData)
@@ -396,7 +396,7 @@ const chooseUpdateCountry = async (query) => {
       country_name: query,
       country_code: '',
       page_num: 1,
-      page_size: 10
+      page_size: 100
     }
     console.log("修改区域选择国家请求数据", requestData);
     const res = await countryApi.filterCountry(requestData)
