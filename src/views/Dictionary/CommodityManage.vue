@@ -487,7 +487,7 @@ const chooseCreateCategory = async (query) => {
     const requestData = {
       category_name: query,
       page_num: 1,
-      page_size: 30
+      page_size: 100
     }
     console.log("搜索品类请求数据", requestData);
     const res = await commodityApi.filterCategory(requestData)
@@ -549,7 +549,7 @@ const chooseCategory = async (query) => {
     const requestData = {
       category_name: query,
       page_num: 1,
-      page_size: 30
+      page_size: 100
     }
     console.log("搜索品类请求数据", requestData);
     const res = await commodityApi.filterCategory(requestData)
@@ -611,7 +611,7 @@ const chooseUpdateCategory = async (query) => {
     const requestData = {
       category_name: query,
       page_num: 1,
-      page_size: 30
+      page_size: 100
     }
     console.log("搜索品类请求数据", requestData);
     const res = await commodityApi.filterCategory(requestData)

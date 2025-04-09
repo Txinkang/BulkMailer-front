@@ -702,14 +702,24 @@ const importSupplier = async (file) => {
     console.log("导入供应商", file.raw);
     const res = await supplierApi.importSupplier(file.raw)
     if (res.code === 200) {
+      // 处理错误信息，每条错误信息换行显示
+      let errorMsgContent = '';
+      if (res.data.errorMsg && Array.isArray(res.data.errorMsg)) {
+        errorMsgContent = `<br>&nbsp;&nbsp;&nbsp;&nbsp;失败原因:<br>${res.data.errorMsg.map(msg => `&nbsp;&nbsp;&nbsp;&nbsp;${msg}`).join('<br>')}`;
+      } else if (res.data.errorMsg) {
+        errorMsgContent = `<br>&nbsp;&nbsp;&nbsp;&nbsp;失败原因: ${res.data.errorMsg}`;
+      } else {
+        errorMsgContent = '<br>&nbsp;&nbsp;&nbsp;&nbsp;如果有数据导入失败，原因可能为：国家、商品、邮箱错误';
+      }
       ElMessageBox.alert(
-        `导入供应商成功:
-        成功${res.data}条。
-        \n如果有数据导入失败，原因可能为：邮箱已被注册，或其他参数不正确。`,
+        `导入供应商成功:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;成功${res.data.success_count}条<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;失败${res.data.fail_count}条${errorMsgContent}`,
         '导入结果',
         {
           type: 'success',
-          confirmButtonText: '确定'
+          confirmButtonText: '确定',
+          dangerouslyUseHTMLString: true // 允许使用HTML
         }
       )
       console.log("导入供应商成功", res);

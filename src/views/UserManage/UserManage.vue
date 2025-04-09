@@ -529,7 +529,7 @@ const createUser = async () => {
     createUserFormRef.value.validate( async (valid) => {
       if (valid) {
         const requestData = {
-          user_role: createUserForm.value.user_role,
+          user_role: Number(createUserForm.value.user_role),
           user_name: createUserForm.value.user_name,
           user_account: createUserForm.value.user_account,
           user_password: createUserForm.value.user_password,
@@ -544,6 +544,7 @@ const createUser = async () => {
           if(userPagination.value.cachedData.get(userPagination.value.serverPage)){
             userPagination.value.cachedData.get(userPagination.value.serverPage).unshift({
               userId: response.data,
+              userRole: Number(createUserForm.value.user_role),
               userName: createUserForm.value.user_name,
               belongUserName: localStorage.getItem("user_name"),
               userAccount: createUserForm.value.user_account,
@@ -555,6 +556,7 @@ const createUser = async () => {
               userPagination.value.serverPage,
               [{
                 userId: response.data,
+                userRole: Number(createUserForm.value.user_role),
                 userName: createUserForm.value.user_name,
                 belongUserName: localStorage.getItem("user_name"),
                 userAccount: createUserForm.value.user_account,
