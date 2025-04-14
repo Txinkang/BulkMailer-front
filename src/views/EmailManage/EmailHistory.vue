@@ -581,7 +581,7 @@ import {errorHandler} from "@/utils/errorHandler.js";
 import SmartPagination from "@/components/SmartPagination.vue";
 import {emailApi} from "@/api/email/email.js";
 import {undeliveredEmailApi} from "@/api/email/undelivered/undeliveredEmail.js";
-import {ElMessage} from "element-plus";
+import {ElMessage, ElMessageBox} from "element-plus";
 import statusData from "@/constants/StatusConstantData.js";
 import emailData from "@/constants/EmailConstantData.js";
 
@@ -1004,6 +1004,17 @@ const resetUndelivered = () => {
 // 重发未送达邮件
 const resendUndelivered = async (row) => {
   try {
+    // 先弹窗确认
+    await ElMessageBox.confirm(
+      '是否确认重发未送达邮件？',
+      '重发确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+        closeOnClickModal: false,
+      }
+    )
     const requestData = {
       email_id: row.emailId,
     }
@@ -1016,7 +1027,11 @@ const resendUndelivered = async (row) => {
       errorHandler.showError("重发未送达邮件失败,请重试", res);
     }
   } catch (error) {
-    errorHandler.showError("重发未送达邮件失败,请重试", error);
+    if (error === 'cancel') {
+      console.log('用户取消了重发未送达邮件操作')
+    } else {
+      errorHandler.showError("重发未送达邮件失败,请重试", error);
+    }
   }
 }
 //================================分页========================================
