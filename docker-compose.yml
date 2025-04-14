@@ -1,6 +1,6 @@
 version: '3'
 services:
-  frontend:
+  admin-large:
     image: admin-large-app  # 使用构建好的镜像
     container_name: admin-large-app
     environment:
@@ -9,3 +9,21 @@ services:
       - IMG_BASE_URL=http://112.35.176.43:9901/imgs/
     ports:
       - "10001:80"  # 端口映射
+  admin-small:
+    image: admin-small-app  # 使用构建好的镜像
+    container_name: admin-small-app
+    environment:
+      - API_BASE_URL=https://www.tangxinkang.com:9900/
+      - ATTACHMENT_BASE_URL=http://112.35.176.43:9901/attachments/
+      - IMG_BASE_URL=http://112.35.176.43:9901/imgs/
+    ports:
+      - "10002:80"  # 端口映射
+  client:
+    image: client-app  # 使用构建好的镜像
+    container_name: client-app
+    environment:
+      - API_BASE_URL=https://www.tangxinkang.com:9900/
+      - ATTACHMENT_BASE_URL=http://112.35.176.43:9901/attachments/
+      - IMG_BASE_URL=http://112.35.176.43:9901/imgs/
+    ports:
+      - "10003:80"  # 端口映射

@@ -826,7 +826,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 import SmartPagination from "@/components/SmartPagination.vue";
 import { debounce } from "lodash";
 import { emailTypeApi } from "@/api/dictionary/emailType.js";
@@ -1056,6 +1056,17 @@ const resetSearchManualTask = () => {
 }
 const manualTaskStart = async (taskId) => {
   try {
+    // 先弹窗确认
+    await ElMessageBox.confirm(
+        '是否确认开始手动发送邮件任务？',
+        '开始确认',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          closeOnClickModal: false,
+        }
+    )
     const requestData = {
       email_task_id: taskId,
       operate_status: 1,
@@ -1077,11 +1088,26 @@ const manualTaskStart = async (taskId) => {
       errorHandler.showError("开始手动发送邮件任务失败,请重试", res);
     }
   } catch (error) {
-    errorHandler.showError("开始手动发送邮件任务失败,请重试", error);
+    if (error === 'cancel') {
+      console.log('用户取消了开始手动发送邮件任务操作')
+    } else {
+      errorHandler.showError("开始手动发送邮件任务失败,请重试", error);
+    }
   }
 }
 const manualTaskPause = async (taskId) => {
   try {
+    // 先弹窗确认
+    await ElMessageBox.confirm(
+        '是否确认暂停手动发送邮件任务？',
+        '暂停确认',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          closeOnClickModal: false,
+        }
+    )
     const requestData = {
       email_task_id: taskId,
       operate_status: 2,
@@ -1103,11 +1129,26 @@ const manualTaskPause = async (taskId) => {
       errorHandler.showError("暂停手动发送邮件任务失败,请重试", res);
     }
   } catch (error) {
-    errorHandler.showError("暂停手动发送邮件任务失败,请重试", error);
+    if (error === 'cancel') {
+      console.log('用户取消了暂停手动发送邮件任务操作')
+    } else {
+      errorHandler.showError("暂停手动发送邮件任务失败,请重试", error);
+    }
   }
 }
 const manualTaskStop = async (taskId) => {
   try {
+    // 先弹窗确认
+    await ElMessageBox.confirm(
+        '是否确认终止手动发送邮件任务？',
+        '终止确认',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          closeOnClickModal: false,
+        }
+    )
     const requestData = {
       email_task_id: taskId,
       operate_status: 3,
@@ -1127,9 +1168,14 @@ const manualTaskStop = async (taskId) => {
       }
     }
   } catch (error) {
-    errorHandler.showError("终止手动发送邮件任务失败,请重试", error);
+    if (error === 'cancel') {
+      console.log('用户取消了终止手动发送邮件任务操作')
+    } else {
+      errorHandler.showError("终止手动发送邮件任务失败,请重试", error);
+    }
   }
 }
+
 
 
 // 循环发送
@@ -1188,6 +1234,17 @@ const resetSearchCircleTask = () => {
 }
 const circleTaskStart = async (taskId) => {
   try {
+    // 先弹窗确认
+    await ElMessageBox.confirm(
+        '是否确认开始循环发送邮件任务？',
+        '开始确认',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          closeOnClickModal: false,
+        }
+    )
     const requestData = {
       email_task_id: taskId,
       operate_status: 1,
@@ -1209,11 +1266,26 @@ const circleTaskStart = async (taskId) => {
       errorHandler.showError("开始循环发送邮件任务失败,请重试", res);
     }
   } catch (error) {
-    errorHandler.showError("开始循环发送邮件任务失败,请重试", error);
+    if (error === 'cancel') {
+      console.log('用户取消了开始循环发送邮件任务操作')
+    } else {
+      errorHandler.showError("开始循环发送邮件任务失败,请重试", error);
+    }
   }
 }
 const circleTaskPause = async (taskId) => {
   try {
+    // 先弹窗确认
+    await ElMessageBox.confirm(
+        '是否确认暂停循环发送邮件任务？',
+        '暂停确认',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          closeOnClickModal: false,
+        }
+    )
     const requestData = {
       email_task_id: taskId,
       operate_status: 2,
@@ -1235,11 +1307,26 @@ const circleTaskPause = async (taskId) => {
       errorHandler.showError("暂停循环发送邮件任务失败,请重试", res);
     }
   } catch (error) {
-    errorHandler.showError("暂停循环发送邮件任务失败,请重试", error);
+    if (error === 'cancel') {
+      console.log('用户取消了暂停循环发送邮件任务操作')
+    } else {
+      errorHandler.showError("暂停循环发送邮件任务失败,请重试", error);
+    }
   }
 }
 const circleTaskStop = async (taskId) => {
   try {
+    // 先弹窗确认
+    await ElMessageBox.confirm(
+        '是否确认终止循环发送邮件任务？',
+        '终止确认',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          closeOnClickModal: false,
+        }
+    )
     const requestData = {
       email_task_id: taskId,
       operate_status: 3,
@@ -1261,14 +1348,29 @@ const circleTaskStop = async (taskId) => {
       errorHandler.showError("终止循环发送邮件任务失败,请重试", res);
     }
   } catch (error) {
-    errorHandler.showError("终止循环发送邮件任务失败,请重试", error);
+    if (error === 'cancel') {
+      console.log('用户取消了终止循环发送邮件任务操作')
+    } else {
+      errorHandler.showError("终止循环发送邮件任务失败,请重试", error);
+    }
   }
 }
 const circleTaskReset = async (taskId) => {
   try {
+    // 先弹窗确认
+    await ElMessageBox.confirm(
+        '是否确认重置循环发送邮件任务？',
+        '重置确认',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          closeOnClickModal: false,
+        }
+    )
     const requestData = {
-      task_id: taskId,
-      operate_status: 4,
+      email_task_id: taskId,
+      //operate_status: "4",
     }
     console.log("重置循环发送邮件任务请求数据", requestData);
     const res = await emailTaskApi.resetStatus(requestData)
@@ -1287,7 +1389,11 @@ const circleTaskReset = async (taskId) => {
       errorHandler.showError("重置循环发送邮件任务失败,请重试", res);
     }
   } catch (error) {
-    errorHandler.showError("重置循环发送邮件任务失败,请重试", error);
+    if (error === 'cancel') {
+      console.log('用户取消了重置循环发送邮件任务操作')
+    } else {
+      errorHandler.showError("重置循环发送邮件任务失败,请重试", error);
+    }
   }
 }
 
@@ -1339,6 +1445,17 @@ const resetSearchFestivalTask = () => {
 }
 const festivalTaskStart = async (taskId) => {
   try {
+    // 先弹窗确认
+    await ElMessageBox.confirm(
+        '是否确认开始节日发送邮件任务？',
+        '开始确认',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          closeOnClickModal: false,
+        }
+    )
     const requestData = {
       email_task_id: taskId,
       operate_status: 1,
@@ -1360,11 +1477,26 @@ const festivalTaskStart = async (taskId) => {
       errorHandler.showError("开始节日发送邮件任务失败,请重试", res);
     }
   } catch (error) {
-    errorHandler.showError("开始节日发送邮件任务失败,请重试", error);
+    if (error === 'cancel') {
+      console.log('用户取消了开始节日发送邮件任务操作')
+    } else {
+      errorHandler.showError("开始节日发送邮件任务失败,请重试", error);
+    }
   }
 }
 const festivalTaskPause = async (taskId) => {
   try {
+    // 先弹窗确认
+    await ElMessageBox.confirm(
+        '是否确认暂停节日发送邮件任务？',
+        '暂停确认',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          closeOnClickModal: false,
+        }
+    )
     const requestData = {
       email_task_id: taskId,
       operate_status: 2,
@@ -1386,11 +1518,26 @@ const festivalTaskPause = async (taskId) => {
       errorHandler.showError("暂停节日发送邮件任务失败,请重试", res);
     }
   } catch (error) {
-    errorHandler.showError("暂停节日发送邮件任务失败,请重试", error);
+    if (error === 'cancel') {
+      console.log('用户取消了暂停节日发送邮件任务操作')
+    } else {
+      errorHandler.showError("暂停节日发送邮件任务失败,请重试", error);
+    }
   }
 }
 const festivalTaskStop = async (taskId) => {
   try {
+    // 先弹窗确认
+    await ElMessageBox.confirm(
+        '是否确认终止节日发送邮件任务？',
+        '终止确认',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          closeOnClickModal: false,
+        }
+    )
     const requestData = {
       email_task_id: taskId,
       operate_status: 3,
@@ -1412,7 +1559,11 @@ const festivalTaskStop = async (taskId) => {
       errorHandler.showError("终止节日发送邮件任务失败,请重试", res);
     }
   } catch (error) {
-    errorHandler.showError("终止节日发送邮件任务失败,请重试", error);
+    if (error === 'cancel') {
+      console.log('用户取消了终止节日发送邮件任务操作')
+    } else {
+      errorHandler.showError("终止节日发送邮件任务失败,请重试", error);
+    }
   }
 }
 const createFestivalTask = async () => {
@@ -1567,6 +1718,17 @@ const startBirth = computed({
   get: () => birthTaskInfo.value.task_status === emailData.EmailTaskStatus.SendStart,
   set: async (val) => {
     try {
+      // 先弹窗确认
+      await ElMessageBox.confirm(
+        '是否确认开始/暂停生日发送邮件任务？',
+        '开始/暂停确认',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          closeOnClickModal: false,
+        }
+      )
       // 为真则表示要开始，为假则暂停任务
       if(val){
         if(birthTaskChangeForm.value.subject === null || birthTaskChangeForm.value.subject === ''|| birthTaskChangeForm.value.template_id === null){
@@ -1602,9 +1764,12 @@ const startBirth = computed({
         }
       }
     } catch (error) {
-      errorHandler.showError("更新生日发送邮件任务状态失败,请重试", error);
+      if (error === 'cancel') {
+        console.log('用户取消了更新生日发送邮件任务状态操作')
+      } else {
+        errorHandler.showError("更新生日发送邮件任务状态失败,请重试", error);
+      }
     }
-
   }
 })
 const handleBirthAttachmentsUpdate = (attachments) => {
